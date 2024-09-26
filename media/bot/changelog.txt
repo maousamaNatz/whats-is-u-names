@@ -1,0 +1,31 @@
+Changelog WhatsApp Bot
+
+[Versi 0.0.2] - 2024-09-17
+
+Fitur Utama:
+- Implementasi dasar bot WhatsApp menggunakan @whiskeysockets/baileys
+- Sistem manajemen perintah dengan pemuatan dinamis
+- Integrasi database MySQL
+- Fitur ping untuk memeriksa responsivitas
+- Fitur cuaca menggunakan API OpenWeatherMap
+- Utilitas AI: GPT-4, DALL-E, dll.
+- Pencarian Google, lirik lagu, dan pemendek URL
+- Pembuatan dan pemrosesan stiker
+- Fitur selamat datang dan perpisahan grup dengan gambar dinamis
+- Integrasi berbagai API AI eksternal
+- Fitur changelog
+
+Konfigurasi:
+- Penggunaan file .env untuk konfigurasi sensitif
+- Konfigurasi koneksi database terpisah
+
+Utilitas:
+- Sistem logging sederhana
+- Fungsi pembantu untuk pemrosesan media dan teks
+
+Dependensi:
+- Penambahan dependensi: axios, canvas, ffmpeg, dll.
+
+Lainnya:
+- Struktur proyek dengan pemisahan concerns
+- Penambahan README dan .gitignore dasar

@@ -1,0 +1,40 @@
+{
+  "version": "0.0.1",
+  "author": "natzsixn",
+  "info": "bot untuk whatsapp",
+  "description": "Trimakasih sudah membeli bot ini, bot ini gratis dan akan terus saya update nantikan update terbaru nya dan jangan lupa untuk memberi star github saya",
+  "github": "https://github.com/natzsixn/whatsapp-bot",
+  "donate": "https://saweria.co/natzsixn",
+  "socialmedia": {
+    "instagram": "https://www.instagram.com/natzsixn",
+    "tiktok": "https://www.tiktok.com/@natzsixn",
+    "youtube": "https://www.youtube.com/@natzsixn"
+  },
+  "bot": {
+    "name": "shikanokobot",
+    "owner": "natzsixn",
+    "description": "trimakasih sudah menggunakan bot ini dan berikut adalah fitur fitur yang di tambahkan pada bot ini",
+    "categoryandfeature": {
+      "ai": {
+        "gpt": {
+          "name": "gpt",
+          "description": "gpt adalah fitur untuk menggunakan gpt yang di berikan oleh bot ini"
+        },
+        "dalle": {
+          "name": "dalle",
+          "description": "dalle adalah fitur untuk menggunakan dalle yang di berikan oleh bot ini"
+        }
+      },
+      "util": {
+        "translate": {
+          "name": "translate",
+          "description": "translate adalah fitur untuk menggunakan translate yang di berikan oleh bot ini"
+        },
+        "tools": {
+          "name": "tools",
+          "description": "tools adalah fitur untuk menggunakan tools yang di berikan oleh bot ini"
+        }
+      }
+    }
+  }
+}
