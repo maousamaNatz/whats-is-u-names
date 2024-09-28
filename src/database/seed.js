@@ -1,93 +1,111 @@
+const { sendWhatsAppMessage, generateMessage } = require("./genewmember");
 const db = require("./database");
-const fs = require("fs");
-const path = require("path");
-function sendWhatsAppMessage(phone, message) {
-    // Implementasi fungsi
-    console.log(`Mengirim pesan ke ${phone}: ${message}`);
-}
-
-const seedDatabase = () => {
+// Database seeding dan pengiriman pesan
+async function seedDatabase(sock) {
   const roles = ["admin", "owner", "user"];
   const users = [
+    { phone: '628817637853', role: "admin", lifetime: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) },
+    { phone: process.env.OWNER_PHONE, role: "owner", lifetime: null },
     {
-      username: "owner",
-      phone: process.env.OWNER_PHONE,
-      role: "owner",
-      lifetime: null,
-    },
-    {
-      username: "user",
-      phone: "087748952040",
+      phone: "6287748952040",
       role: "user",
       lifetime: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     },
   ];
 
-  roles.forEach((role) => {
-    db.query(
-      "INSERT INTO roles (name) VALUES (?) ON DUPLICATE KEY UPDATE name=name",
-      [role],
-      (err) => {
-        if (err) {
-          console.error(`Error inserting role ${role}:`, err);
-        } else {
-          console.log(`Role ${role} inserted or already exists.`);
-        }
+  // Masukkan roles ke dalam tabel
+  const insertRoles = async () => {
+    for (const role of roles) {
+      try {
+        await new Promise((resolve, reject) => {
+          db.query(
+            "INSERT IGNORE INTO roles (name) VALUES (?)",
+            [role],
+            (err, result) => {
+              if (err) reject(err);
+              else resolve(result);
+            }
+          );
+        });
+        console.log(`Role ${role} dimasukkan atau sudah ada.`);
+      } catch (err) {
+        console.error(`Error saat memasukkan role ${role}:`, err);
       }
-    );
-  });
+    }
+  };
 
+  // Panggil fungsi insertRoles sebelum memproses pengguna
+  await insertRoles();
+
+  // Proses pengguna setelah memastikan roles sudah ada
   users.forEach((user) => {
+    // Cari role_id berdasarkan nama role
     db.query(
-      "SELECT id, lifetime FROM users WHERE username = ?",
-      [user.username],
+      "SELECT id FROM roles WHERE name = ?",
+      [user.role],
       (err, results) => {
         if (err) {
-          console.error(`Error finding user ${user.username}:`, err);
+          console.error(`Error finding role for ${user.role}:`, err);
+        } else if (results.length === 0) {
+          console.error(`Role ${user.role} not found.`);
         } else {
-          const roleId = results.length > 0 ? results[0].id : null;
-          const existingLifetime =
-            results.length > 0 ? results[0].lifetime : null;
+          const roleId = results[0].id;
 
+          // Cek apakah user sudah ada berdasarkan nomor telepon
           db.query(
-            "INSERT INTO users (username, phone, role_id, lifetime) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE phone = VALUES(phone), role_id = VALUES(role_id), lifetime = VALUES(lifetime)",
-            [user.username, user.phone, roleId, user.lifetime],
-            (err, result) => {
+            "SELECT id, lifetime FROM users WHERE phone = ?",
+            [user.phone],
+            (err, results) => {
               if (err) {
-                console.error(`Error inserting user ${user.username}:`, err);
-              } else {
-                if (result.affectedRows === 1) {
-                  console.log(`User ${user.username} inserted.`);
-                } else if (result.affectedRows === 2) {
-                  console.log(`User ${user.username} updated.`);
-                  if (existingLifetime !== user.lifetime) {
-                    console.log(
-                      `Lifetime for user ${user.username} updated to ${user.lifetime}.`
-                    );
+                console.error(`Error finding user ${user.phone}:`, err);
+              } else if (results.length > 0) {
+                const existingUser = results[0];
+
+                // Jika user sudah ada, update hanya jika ada perubahan pada role_id atau lifetime
+                db.query(
+                  "UPDATE users SET role_id = ?, lifetime = ? WHERE id = ?",
+                  [roleId, user.lifetime, existingUser.id],
+                  (err) => {
+                    if (err) {
+                      console.error(
+                        `Error updating user ${user.phone}:`,
+                        err
+                      );
+                    } else {
+                      console.log(`User ${user.phone} updated.`);
+
+                      // Jika lifetime berubah, kirim pesan
+                      if (existingUser.lifetime !== user.lifetime) {
+                        sendWhatsAppMessage(
+                          sock,
+                          user.phone,
+                          generateMessage(user)
+                        );
+                      }
+                    }
                   }
-                }
-
-                // Kirim pesan WhatsApp
-                const logoPath = path.join(
-                  __dirname,
-                  "../../media/welandouts/defaultWa.jpeg"
                 );
-                const logo = fs.readFileSync(logoPath, "utf8");
-                const message = `
-${logo}
-Trimakasih sudah berlangganan pada bot kami dan semoga bot dapat membantu anda menyelesaikan masalah anda. Jika terdapat bug ataupun error pada fitur fitur bot silahkan hubungi owner atau developer ${
-                  process.env.OWNER_NAME
-                }
-
-nama: ${user.username}
-masa aktif: ${
-                  user.lifetime
-                    ? user.lifetime.toISOString().split("T")[0]
-                    : "Selamanya"
-                }
-tanggal langganan: ${new Date().toISOString().split("T")[0]}
-                `;
-                sendWhatsAppMessage(user.phone, message);
+              } else {
+                // Jika user belum ada, insert user baru
+                db.query(
+                  "INSERT INTO users (phone, role_id, lifetime) VALUES (?, ?, ?)",
+                  [user.phone, roleId, user.lifetime],
+                  (err) => {
+                    if (err) {
+                      console.error(
+                        `Error inserting user ${user.phone}:`,
+                        err
+                      );
+                    } else {
+                      console.log(`User ${user.phone} inserted.`);
+                      sendWhatsAppMessage(
+                        sock,
+                        user.phone,
+                        generateMessage(user)
+                      );
+                    }
+                  }
+                );
               }
             }
           );
@@ -95,6 +113,6 @@ tanggal langganan: ${new Date().toISOString().split("T")[0]}
       }
     );
   });
-};
+}
 
 module.exports = { seedDatabase };

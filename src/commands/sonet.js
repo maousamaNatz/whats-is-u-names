@@ -2,7 +2,7 @@ const { claude35sonnet} = require("../libs/ai");
 const { checkAuth } = require("../database/auth");
 module.exports = {
     name: "claude",
-    middleware: checkAuth(["admin", "owner"]),
+    // middleware: checkAuth(["admin", "owner"]),
     description: "Menggunakan AI sonet untuk menjawab pertanyaan",
     async execute(sock, message) {
         const from = message.key.remoteJid;

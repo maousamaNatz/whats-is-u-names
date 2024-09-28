@@ -60,7 +60,7 @@ async function gemini15flash(question) {
   }
 }
 async function claude35sonnet(question) {
-  const modelId = "claude-3-haiku"; // Pastikan ID model ini benar
+  const modelId = "claude-3.5-sonnet"; // Pastikan ID model ini benar
   const trimquestion = question.trim();
   try {
     const response = await axios.post(
@@ -121,14 +121,14 @@ async function gpt4(question) {
   const trimquestion = question.trim();
   try {
     const response = await axios.post(
-      'https://api.openai.com/v1/chat/completions',
+      url,
       {
         model: modelId,
         messages: [{ role: "user", content: trimquestion }],
       },
       {
         headers: {
-          Authorization: `Bearer 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`,
+          Authorization: `Bearer ${apikey}`,
           "Content-Type": "application/json",
         },
       }

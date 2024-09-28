@@ -3,7 +3,7 @@ const { checkAuth } = require("../database/auth");
 
 module.exports = {
     name: "gpt4",
-    middleware: checkAuth(["admin", "owner"]),
+    // middleware: checkAuth(["admin", "owner"]),
     description: "Menggunakan AI gpt 4 untuk menjawab pertanyaan",
     async execute(sock, message) {
       const from = message.key.remoteJid;

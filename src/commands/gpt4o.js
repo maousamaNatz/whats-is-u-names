@@ -2,7 +2,7 @@ const { gpt4o} = require("../libs/ai");
 const { checkAuth } = require("../database/auth");
 module.exports = {
     name: "gpt4o",
-    middleware: checkAuth(["admin", "owner"]),
+    // middleware: checkAuth(["admin", "owner"]),
     description: "Menggunakan AI gpt 4o untuk menjawab pertanyaan",
     async execute(sock, message) {
       const from = message.key.remoteJid;

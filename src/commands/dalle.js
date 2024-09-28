@@ -2,7 +2,7 @@ const { dalle } = require("../libs/ai");
 const { checkAuth } = require("../database/auth");
 module.exports = {
   name: "dalle",
-  middleware: checkAuth(["admin", "owner"]),
+  // middleware: checkAuth(["admin", "owner"]),
   description: "Menggunakan AI dalle untuk menjawab pertanyaan",
   async execute(sock, message) {
     const from = message.key.remoteJid;

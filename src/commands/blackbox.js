@@ -3,7 +3,7 @@ const { checkAuth } = require("../database/auth");
 
 module.exports = {
   name: "blackbox",
-  middleware: checkAuth(["admin", "owner"]),
+  // middleware: checkAuth(["admin", "owner"]),
   description: "Menggunakan AI untuk menjawab pertanyaan",
   async execute(sock, message) {
     const from = message.key.remoteJid;
