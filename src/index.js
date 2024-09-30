@@ -18,7 +18,7 @@ const app = express();
 
 const sessions = global.sessions || {}; // Penyimpanan session user
 let botInti; // Bot inti
-
+const port = process.env.PORT || 3000;
 // Middleware untuk mengatur userId di req
 app.use((req, res, next) => {
   req.userId = req.query.userId || 1; // Default userId ke 1
@@ -75,8 +75,8 @@ app.get("/stop-session", (req, res) => {
 });
 
 // Memulai server express
-app.listen(3000, () => {
-  console.log("Server berjalan di port 3000");
+app.listen(port, () => {
+  console.log(`Server berjalan di port ${port}`);
   startBotInti(); // Mulai bot inti saat server dimulai
 });
 
