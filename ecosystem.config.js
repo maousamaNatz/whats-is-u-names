@@ -1,11 +1,15 @@
 module.exports = {
   apps: [
     {
-      name: "shikanoko", // Nama aplikasi
-      script: "./src/index.js", // File utama untuk menjalankan aplikasi
+      name: 'shikanoko',
+      script: './src/index.js',
+      log_type: 'json',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss',
       watch: ["src"], // Aktifkan watch untuk memonitor perubahan file
       ignore_watch: ["node_modules", "sessions", "logs", "media"], // Abaikan perubahan di folder ini
-      max_memory_restart: "500M", // Restart aplikasi jika penggunaan memori melebihi 500MB
+      max_memory_restart: "400M", // Restart aplikasi jika penggunaan memori melebihi 500MB
+      instances: 1,
+      exec_mode: 'fork', // Atau 'cluster' jika Anda memerlukan cluste
       env: {
         NODE_ENV: "development",
         PORT: 3000,
@@ -29,10 +33,9 @@ module.exports = {
       // Hooks untuk membersihkan cache
       post_start: "npm run clean-cache",
       restart_delay: 3000,
-      max_restarts: 10,
+      max_restarts: 1,
       autorestart: true,
       exec_mode: "cluster",
-      instances: "max",
     },
   ],
 };

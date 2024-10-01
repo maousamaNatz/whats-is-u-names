@@ -14,7 +14,7 @@ module.exports = {
         const newSock = await initiateBot(sessionPath, userId);
         const qrPath = await getSessionQR(userId);
 
-        await sendWhatsAppMessage(newSock, userId, { image: { url: qrPath } });
+        await sendWhatsAppMessage(newSock, userId, { image: { url: qrPath } }, 3);
 
         global.sessions[userId] = newSock;
         await sock.sendMessage(from, {

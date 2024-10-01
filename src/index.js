@@ -10,9 +10,10 @@ const fs = require("fs");
 const { getSessionQR } = require("./utils/session");
 const db = require("./database/database");
 const { createTables } = require("./database/createtbl");
-const { seedDatabase } = require("./database/seed");
+const { seedDatabase } = require("./database/seedDb");
 const express = require("express");
-const { saveBotToDatabase, startBot } = require("./database/svbot"); // Fungsi menyimpan bot ke database
+const { saveBotToDatabase} = require("./database/svbot"); // Fungsi menyimpan bot ke database
+const { sendWhatsAppMessage } = require("./database/genewmember"); // Fungsi untuk mengirim pesan WhatsApp
 const asciiLogo = fs.readFileSync("./media/bot/logo.txt", "utf8");
 const app = express();
 
@@ -22,7 +23,7 @@ const port = process.env.PORT || 3000;
 // Middleware untuk mengatur userId di req
 app.use((req, res, next) => {
   req.userId = req.query.userId || 1; // Default userId ke 1
-  next();
+  next(); 
 });
 
 // Fungsi untuk memulai bot inti
@@ -30,6 +31,17 @@ async function startBotInti() {
   const sessionPath = "./natzsixn"; // Session tetap untuk bot inti
   botInti = await initiateBot(sessionPath, "bot-inti"); // Memulai bot inti
   console.log("Bot inti berjalan dengan session tetap");
+  
+  // Kirim pesan ke nomor owner bahwa bot inti siap digunakan
+  const ownerNumber = process.env.OWNER_PHONE;
+  if (botInti && botInti.user) {
+    await sendWhatsAppMessage(botInti, ownerNumber, { 
+      text: "Bot inti siap digunakan! 🤖✅" 
+    });
+  } else {
+    console.log("Tidak dapat mengirim pesan: botInti atau botInti.user tidak tersedia");
+    return res.status(400).send("Session sudah ada");
+  }
 }
 
 app.get("/create-session", async (req, res) => {
@@ -88,6 +100,7 @@ async function initiateBot(sessionPath, userId = "bot-inti", lifetime = 30) {
   db.query("SELECT 1", (err) => {
     if (err) {
       console.error("Error menghubungkan ke database:", err);
+      process.exit(1); // Keluar dari proses jika terjadi error fatal
     } else {
       console.log("Terhubung ke database MySQL");
       createTables();
@@ -161,9 +174,6 @@ async function initiateBot(sessionPath, userId = "bot-inti", lifetime = 30) {
 
     if (sock.commands.has(commandName)) {
       const command = sock.commands.get(commandName);
-      console.log(`[DEBUG] nomor client: ${message.key.remoteJid}`);
-      console.log(`[DEBUG] Pesan dari klien: ${text}`);
-      console.log(`[DEBUG] deskripsi fitur: ${command.description}`);
       try {
         await command.execute(sock, message);
       } catch (error) {

@@ -1,118 +1,93 @@
 const { sendWhatsAppMessage, generateMessage } = require("./genewmember");
 const db = require("./database");
-// Database seeding dan pengiriman pesan
-async function seedDatabase(sock) {
-  const roles = ["admin", "owner", "user"];
-  const users = [
-    { phone: '628817637853', role: "admin", lifetime: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) },
-    { phone: process.env.OWNER_PHONE, role: "owner", lifetime: null },
-    {
-      phone: "6287748952040",
-      role: "user",
-      lifetime: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-    },
-  ];
 
-  // Masukkan roles ke dalam tabel
-  const insertRoles = async () => {
-    for (const role of roles) {
-      try {
-        await new Promise((resolve, reject) => {
-          db.query(
-            "INSERT IGNORE INTO roles (name) VALUES (?)",
-            [role],
-            (err, result) => {
-              if (err) reject(err);
-              else resolve(result);
-            }
-          );
-        });
-        console.log(`Role ${role} dimasukkan atau sudah ada.`);
-      } catch (err) {
-        console.error(`Error saat memasukkan role ${role}:`, err);
+const roles = ["admin", "owner", "user"];
+const users = [
+  { phone: '628817637853', role: "admin", lifetime: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) },
+  { phone: process.env.OWNER_PHONE, role: "owner", lifetime: null },
+  {
+    phone: "6287748952040",
+    role: "user",
+    lifetime: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+  },
+];
+
+// Fungsi untuk menambahkan role jika belum ada
+const insertRoles = async () => {
+  for (const role of roles) {
+    try {
+      // Cek apakah role sudah ada
+      const [roleResults] = await db.promise().query(
+        "SELECT id FROM roles WHERE name = ?",
+        [role]
+      );
+
+      if (roleResults.length > 0) {
+        console.log(`Role ${role} sudah ada, tidak akan ditambahkan.`);
+      } else {
+        // Tambahkan role jika belum ada
+        await db.promise().query(
+          "INSERT INTO roles (name) VALUES (?)",
+          [role]
+        );
+        console.log(`Role ${role} berhasil ditambahkan.`);
       }
+    } catch (err) {
+      console.error(`Error saat memasukkan role ${role}:`, err);
     }
-  };
+  }
+};
 
-  // Panggil fungsi insertRoles sebelum memproses pengguna
-  await insertRoles();
-
-  // Proses pengguna setelah memastikan roles sudah ada
-  users.forEach((user) => {
-    // Cari role_id berdasarkan nama role
-    db.query(
+// Fungsi untuk menambahkan atau memperbarui pengguna
+const insertOrUpdateUser = async (sock, user) => {
+  try {
+    const [roleResults] = await db.promise().query(
       "SELECT id FROM roles WHERE name = ?",
-      [user.role],
-      (err, results) => {
-        if (err) {
-          console.error(`Error finding role for ${user.role}:`, err);
-        } else if (results.length === 0) {
-          console.error(`Role ${user.role} not found.`);
-        } else {
-          const roleId = results[0].id;
-
-          // Cek apakah user sudah ada berdasarkan nomor telepon
-          db.query(
-            "SELECT id, lifetime FROM users WHERE phone = ?",
-            [user.phone],
-            (err, results) => {
-              if (err) {
-                console.error(`Error finding user ${user.phone}:`, err);
-              } else if (results.length > 0) {
-                const existingUser = results[0];
-
-                // Jika user sudah ada, update hanya jika ada perubahan pada role_id atau lifetime
-                db.query(
-                  "UPDATE users SET role_id = ?, lifetime = ? WHERE id = ?",
-                  [roleId, user.lifetime, existingUser.id],
-                  (err) => {
-                    if (err) {
-                      console.error(
-                        `Error updating user ${user.phone}:`,
-                        err
-                      );
-                    } else {
-                      console.log(`User ${user.phone} updated.`);
-
-                      // Jika lifetime berubah, kirim pesan
-                      if (existingUser.lifetime !== user.lifetime) {
-                        sendWhatsAppMessage(
-                          sock,
-                          user.phone,
-                          generateMessage(user)
-                        );
-                      }
-                    }
-                  }
-                );
-              } else {
-                // Jika user belum ada, insert user baru
-                db.query(
-                  "INSERT INTO users (phone, role_id, lifetime) VALUES (?, ?, ?)",
-                  [user.phone, roleId, user.lifetime],
-                  (err) => {
-                    if (err) {
-                      console.error(
-                        `Error inserting user ${user.phone}:`,
-                        err
-                      );
-                    } else {
-                      console.log(`User ${user.phone} inserted.`);
-                      sendWhatsAppMessage(
-                        sock,
-                        user.phone,
-                        generateMessage(user)
-                      );
-                    }
-                  }
-                );
-              }
-            }
-          );
-        }
-      }
+      [user.role]
     );
-  });
-}
 
-module.exports = { seedDatabase };
+    if (roleResults.length === 0) {
+      throw new Error(`Role ${user.role} tidak ditemukan.`);
+    }
+
+    const roleId = roleResults[0].id;
+
+    const [userResults] = await db.promise().query(
+      "SELECT id, phone, lifetime FROM users WHERE phone = ?",
+      [user.phone]
+    );
+
+    if (userResults.length > 0) {
+      const existingUser = userResults[0];
+
+      // Jika user sudah ada, update jika ada perubahan pada role_id atau lifetime
+      if (existingUser.lifetime !== user.lifetime || existingUser.role_id !== roleId) {
+        await db.promise().query(
+          "UPDATE users SET role_id = ?, lifetime = ? WHERE id = ?",
+          [roleId, user.lifetime, existingUser.id]
+        );
+        console.log(`User ${user.phone} diperbarui.`);
+
+        if (sock && sock.user) {
+          sendWhatsAppMessage(sock, user.phone, generateMessage(user));
+        } else {
+          console.log(`Koneksi WhatsApp belum siap. Pesan untuk ${user.phone} akan dikirim nanti.`);
+        }
+      } else {
+        console.log(`User ${user.phone} sudah ada dengan data yang sama. Tidak ada perubahan yang dilakukan.`);
+      }
+    } else {
+      // Jika user belum ada, insert user baru
+      await db.promise().query(
+        "INSERT INTO users (phone, role_id, lifetime) VALUES (?, ?, ?)",
+        [user.phone, roleId, user.lifetime]
+      );
+      console.log(`User ${user.phone} berhasil ditambahkan.`);
+      sendWhatsAppMessage(sock, user.phone, generateMessage(user));
+    }
+  } catch (err) {
+    console.error(`Error saat memproses user ${user.phone}:`, err);
+  }
+};
+
+module.exports = { insertRoles, insertOrUpdateUser, users };
