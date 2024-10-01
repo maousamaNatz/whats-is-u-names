@@ -28,21 +28,36 @@ app.use((req, res, next) => {
 
 // Fungsi untuk memulai bot inti
 async function startBotInti() {
-  const sessionPath = "./natzsixn"; // Session tetap untuk bot inti
-  botInti = await initiateBot(sessionPath, "bot-inti"); // Memulai bot inti
-  console.log("Bot inti berjalan dengan session tetap");
-  
-  // Kirim pesan ke nomor owner bahwa bot inti siap digunakan
-  const ownerNumber = process.env.OWNER_PHONE;
-  if (botInti && botInti.user) {
-    await sendWhatsAppMessage(botInti, ownerNumber, { 
-      text: "Bot inti siap digunakan! 🤖✅" 
+  try {
+    const { state, saveCreds } = await useMultiFileAuthState('./sessions/whatsapp-session-bot-inti');
+    
+    botInti = makeWASocket({
+      auth: state,
+      logger: P({ level: "silent" }),
+      printQRInTerminal: true,
+      browser: ["Bot Inti", "Chrome", "1.0"],
     });
-  } else {
-    console.log("Tidak dapat mengirim pesan: botInti atau botInti.user tidak tersedia");
-    return res.status(400).send("Session sudah ada");
+
+    botInti.ev.on("creds.update", saveCreds);
+
+    botInti.ev.on("connection.update", (update) => {
+      const { connection, lastDisconnect } = update;
+      if (connection === "close") {
+        const shouldReconnect = (lastDisconnect?.error instanceof Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
+        console.log("Koneksi terputus, menghubungkan kembali...", shouldReconnect);
+        if (shouldReconnect) {
+          startBotInti();
+        }
+      } else if (connection === "open") {
+        console.log("Bot Inti siap!");
+      }
+    });
+
+  } catch (error) {
+    console.error("Error saat memulai Bot Inti:", error);
   }
 }
+
 
 app.get("/create-session", async (req, res) => {
   const userId = req.query.userId;
