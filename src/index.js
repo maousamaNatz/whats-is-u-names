@@ -25,8 +25,15 @@ app.use((req, res, next) => {
   req.userId = req.query.userId || 1; // Default userId ke 1
   next(); 
 });
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // Fungsi untuk memulai bot inti
 async function startBotInti() {
+  console.log("Memulai bot inti...");
+  await delay(5000);
   const sessionPath = "./sessions/whatsapp-session-bot-inti"; // Session tetap untuk bot inti
   botInti = await initiateBot(sessionPath, "bot-inti"); // Memulai bot inti
   console.log("Bot inti berjalan dengan session tetap");
@@ -54,6 +61,9 @@ app.get("/create-session", async (req, res) => {
   }
 
   try {
+    await sendWhatsAppMessage(botInti, userId, { text: "Memulai bot user..." });
+    
+    await delay(7000);
     const sock = await initiateBot(sessionPath, userId);
     const qrPath = await getSessionQR(userId);
 
