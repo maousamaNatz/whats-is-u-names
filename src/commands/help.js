@@ -24,7 +24,6 @@ Halo! Saya adalah bot yang siap membantu Anda dalam berbagai kebutuhan sehari-ha
 5.) *.tts* : Ubah teks menjadi suara (Text to Speech)
 6.) *.download* : Download berbagai konten dari internet
 7.) *.search* : Pencarian cepat berbagai hal
-
 ──────────────────
 *🔄 Conversion Tools:*
 ──────────────────
@@ -51,7 +50,24 @@ Halo! Saya adalah bot yang siap membantu Anda dalam berbagai kebutuhan sehari-ha
 ──────────────────
 *👥 Group Commands:*
 ──────────────────
+2.) *.mute* : Matikan notifikasi grup (Hanya admin)
+3.) *.unmute* : Aktifkan kembali notifikasi grup (Hanya admin) *ONGOING*
+4.) *.clearall* : Hapus semua pesan di grup (Hanya admin) *ONGOING*
+5.) *.kick* : mengeluarkan member dari grup (Hanya admin)
+6.) *.add* : Tambahkan member ke grup (Hanya admin)
+7.) *.silent* : membuat group agar hanya admin yang bisa mengirim pesan
+8.) *.promote* : mempromosikan member ke admin (Hanya admin) *ONGOING*
+
 ⚠️ *Coming Soon!* Fitur menarik untuk pengelolaan grup.
+
+__________________
+
+OWNER COMMAND 
+__________________
+
+1.) *.broadcast* : Kirim pesan ke semua grup (Hanya owner)
+2.) *.sleep* : Aktifkan mode tidur bot (Hanya owner)
+3.) *.wakeup* : Nonaktifkan mode tidur bot (Hanya owner)
 
 ──────────────────
 ❓ *FAQ:*
@@ -70,6 +86,7 @@ Jika Anda mengalami masalah atau menemukan error, jangan ragu untuk menghubungi 
 *🔔 Tetap Terhubung:*
 ──────────────────
 Jangan lupa cek pembaruan fitur baru setiap minggunya! Kami terus berkembang untuk memberikan pengalaman terbaik bagi Anda.
+Bot aktif setiap hari dari pukul 03:00 WIB hingga 22:00 WIB.
 
 *Terima kasih telah menggunakan bot kami! 🤖✨*
 `;

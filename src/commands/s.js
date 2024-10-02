@@ -3,7 +3,7 @@ const fs = require('fs');
 const fileType = require('file-type');
 
 module.exports = {
-  name: 's',
+  name: 's' || 'sticker',
   description: 'Membuat stiker dari gambar atau video yang dikirim',
   async execute(sock, message) {
     const from = message.key.remoteJid;

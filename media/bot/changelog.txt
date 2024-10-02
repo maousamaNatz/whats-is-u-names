@@ -1,31 +1,104 @@
 Changelog WhatsApp Bot
 
-[Versi 0.0.2] - 2024-09-17
+[Versi 0.0.3] - 2024-09-18
 
 Fitur Utama:
-- Implementasi dasar bot WhatsApp menggunakan @whiskeysockets/baileys
-- Sistem manajemen perintah dengan pemuatan dinamis
-- Integrasi database MySQL
-- Fitur ping untuk memeriksa responsivitas
-- Fitur cuaca menggunakan API OpenWeatherMap
-- Utilitas AI: GPT-4, DALL-E, dll.
-- Pencarian Google, lirik lagu, dan pemendek URL
-- Pembuatan dan pemrosesan stiker
-- Fitur selamat datang dan perpisahan grup dengan gambar dinamis
-- Integrasi berbagai API AI eksternal
-- Fitur changelog
+1. Implementasi Bot WhatsApp:
+   - Menggunakan library @whiskeysockets/baileys versi terbaru untuk koneksi WhatsApp
+   - Sistem multi-sesi yang memungkinkan bot inti dan bot pengguna berjalan bersamaan
+   - Penanganan koneksi otomatis dengan fitur reconnect saat terputus
+   - Implementasi QR code generation untuk autentikasi sesi baru
+   - Penggunaan useMultiFileAuthState untuk manajemen kredensial yang lebih aman
 
-Konfigurasi:
-- Penggunaan file .env untuk konfigurasi sensitif
-- Konfigurasi koneksi database terpisah
+2. Manajemen Perintah:
+   - Sistem pemuatan perintah dinamis dari folder commands
+   - Penambahan berbagai perintah baru:
+     * help: Menampilkan daftar perintah yang tersedia
+     * gpt4: Integrasi dengan model GPT-4 untuk pemrosesan bahasa alami
+     * broadcast: Mengirim pesan ke semua grup
+     * changelog: Menampilkan perubahan terbaru pada bot
+   - Implementasi prefix konfigurabel untuk perintah (.prefix)
 
-Utilitas:
-- Sistem logging sederhana
-- Fungsi pembantu untuk pemrosesan media dan teks
+3. Integrasi Database:
+   - Koneksi ke MySQL untuk penyimpanan data pengguna dan sesi
+   - Fungsi createTables untuk inisialisasi struktur database
+   - Implementasi seedDatabase untuk populasi data awal
+   - Fungsi saveBotToDatabase untuk menyimpan informasi bot ke database
+
+4. Fitur AI:
+   - Integrasi dengan berbagai model AI:
+     * GPT-4 untuk pemrosesan bahasa alami tingkat lanjut
+     * GPT-3.5 Turbo untuk respons cepat
+     * Gemini 1.5 Flash untuk pemrosesan ultra-cepat
+   - Implementasi sistem fallback: jika model utama gagal, bot akan mencoba model alternatif
+   - Penggunaan axios untuk request API ke layanan AI
+
+5. Fitur Grup:
+   - Broadcast pesan ke semua grup dengan satu perintah
+   - Pengecekan status admin grup menggunakan fungsi isGroupAdmin
+   - Fitur selamat datang dan perpisahan dengan gambar dinamis menggunakan canvas
+   - Implementasi fitur mute dan unmute grup
+
+6. Manajemen Sesi:
+   - Pembuatan dan pengelolaan sesi WhatsApp menggunakan useMultiFileAuthState
+   - Penyimpanan kredensial sesi secara aman dengan enkripsi
+   - Implementasi sistem multi-sesi untuk mendukung bot inti dan bot pengguna
+
+7. Utilitas:
+   - Fungsi delay untuk menangani operasi asynchronous
+   - Pembersihan cache otomatis menggunakan PM2 hooks
+   - Sistem logging yang ditingkatkan dengan format JSON dan timestamp
+   - Implementasi fungsi formatNumber untuk memformat nomor telepon
+
+8. Keamanan:
+   - Implementasi sleep mode untuk menghemat sumber daya dan meningkatkan privasi
+   - Pengecekan otentikasi untuk perintah tertentu menggunakan isOwner
+   - Penggunaan file .env untuk menyimpan konfigurasi sensitif
+   - Implementasi ratelimiting untuk mencegah spam
+
+9. Antarmuka Web:
+   - Server Express untuk manajemen sesi dan bot
+   - Endpoint /create-session untuk membuat sesi baru
+   - Endpoint /stop-session untuk menghentikan sesi yang berjalan
+   - Implementasi middleware untuk pengecekan userId
+
+Perbaikan dan Optimisasi:
+- Perbaikan bug pada penanganan pesan grup
+- Optimisasi penggunaan memori dengan pembatasan maksimum 400MB
+- Peningkatan keandalan saat mengirim pesan dengan sistem retry (3 kali percobaan)
+- Perbaikan penanganan error pada fungsi handleGroupUpdate
+
+Konfigurasi dan Pengaturan:
+- Penggunaan file .env untuk konfigurasi sensitif seperti API_KEY dan URL_AI
+- Konfigurasi PM2 untuk manajemen proses dan auto-restart
+- Pengaturan waktu aktif bot (03:00 WIB - 22:00 WIB) menggunakan moment-timezone
+- Konfigurasi stiker yang dapat disesuaikan (nama pack, author, kategori)
+
+Dokumentasi:
+- Penambahan pesan bantuan yang lebih informatif di fungsi help
+- Pembaruan README dengan instruksi instalasi, penggunaan, dan troubleshooting
+- Penambahan komentar pada fungsi-fungsi utama untuk memudahkan pemahaman kode
 
 Dependensi:
-- Penambahan dependensi: axios, canvas, ffmpeg, dll.
+- Penambahan axios untuk request HTTP
+- Penggunaan moment-timezone untuk penanganan zona waktu
+- Integrasi canvas untuk pembuatan gambar dinamis
+- Penggunaan pino untuk logging yang lebih baik
 
-Lainnya:
-- Struktur proyek dengan pemisahan concerns
-- Penambahan README dan .gitignore dasar
+Perubahan Struktur Proyek:
+- Reorganisasi file dan folder:
+  * /src untuk kode sumber utama
+  * /media untuk aset media
+  * /sessions untuk penyimpanan sesi
+- Pemisahan logika bisnis ke dalam modul-modul terpisah (utils, libs, commands)
+
+Fitur Eksperimental:
+- Implementasi awal untuk fitur game (akan dikembangkan lebih lanjut)
+- Persiapan untuk integrasi fitur grup tambahan seperti anti-spam dan welcome message kustom
+
+Catatan Pengembang:
+- Peningkatan penanganan error dengan try-catch yang lebih komprehensif
+- Implementasi praktik keamanan yang lebih baik, termasuk sanitasi input
+- Persiapan untuk skalabilitas di masa depan dengan arsitektur modular
+
+Versi ini mencakup berbagai peningkatan signifikan dalam fungsionalitas, keandalan, dan keamanan bot. Pengembangan akan terus berlanjut dengan fokus pada penambahan fitur baru, optimisasi performa, dan peningkatan pengalaman pengguna.
