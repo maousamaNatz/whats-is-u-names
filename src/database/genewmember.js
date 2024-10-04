@@ -3,7 +3,7 @@ const path = require("path");
 
 let isProcessing = false;
 
-const sendWhatsAppMessage = async (sock, jid, content, timeout = 60000) => {
+const sendWhatsAppMessage = async (sock, jid, content, timeout = 120000) => {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       reject(new Error('Timeout: Gagal mengirim pesan setelah ' + timeout + 'ms'));

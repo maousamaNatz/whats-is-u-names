@@ -1,22 +1,22 @@
 const { writeExifImg, writeExifVid } = require('../libs/exif');
 const fileType = require('file-type');
-const { downloadContentFromMessage } = require('@whiskeysockets/baileys'); // Import function untuk download media
+const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
 
 module.exports = {
   name: 's' || 'sticker',
   description: 'Membuat stiker dari gambar atau video yang dikirim',
   async execute(sock, message) {
     const from = message.key.remoteJid;
-    
-    // Cek apakah ada pesan media yang diterima (gambar atau video)
-    const mediaMessage = 
-      message.message?.imageMessage || // Pesan gambar
-      message.message?.videoMessage || // Pesan video
-      message.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage || // Cek apakah ada gambar yang dikutip
-      message.message?.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage;   // Cek apakah ada video yang dikutip
 
+    // Cek apakah ada pesan media yang diterima (gambar atau video)
+    const mediaMessage =
+      message.message?.imageMessage || // Pesan gambar tanpa caption
+      message.message?.videoMessage || // Pesan video tanpa caption
+      message.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage || // Gambar dengan caption
+      message.message?.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage;   // Video dengan caption
+
+    // Jika tidak ada media, kirim pesan error
     if (!mediaMessage) {
-      // Jika tidak ada media, kirim pesan error
       await sock.sendMessage(from, { text: 'Silakan kirim gambar atau video untuk dijadikan stiker.' });
       return;
     }
@@ -24,7 +24,7 @@ module.exports = {
     try {
       console.log('Media message detected, downloading media...');
 
-      // Fungsi untuk mengunduh media menggunakan `downloadContentFromMessage`
+      // Download media menggunakan `downloadContentFromMessage`
       const stream = await downloadContentFromMessage(mediaMessage, mediaMessage.mimetype.includes('video') ? 'video' : 'image');
       let mediaBuffer = Buffer.from([]);
 

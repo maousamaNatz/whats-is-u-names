@@ -13,7 +13,7 @@ module.exports = {
       env_production: {
         NODE_ENV: "development",
         PORT: process.env.PORT || 8080,
-        PREFIX: ".",
+        PREFIX: "." || "/" || "./" || "!",
         OWNER_NAME: "natzsixn",
         OWNER_PHONE: "6287748952040",
         STICKER_PACK_NAME: "My Sticker Pack",
@@ -23,7 +23,7 @@ module.exports = {
       env_production: {
         NODE_ENV: "production",
         PORT: process.env.PORT || 8080,
-        PREFIX: ".",
+        PREFIX: "." || "/" || "./" || "!",
         OWNER_NAME: "natzsixn",
         OWNER_PHONE: "6287748952040",
         STICKER_PACK_NAME: "My Sticker Pack",

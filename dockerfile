@@ -13,18 +13,20 @@ RUN npm install
 # Salin seluruh kode sumber aplikasi
 COPY . .
 
-# Install dependensi sistem yang diperlukan untuk canvas
+
 RUN apt-get update && apt-get install -y \
     libcairo2-dev \
     libjpeg-dev \
     libpango1.0-dev \
     libgif-dev \
+    librsvg2-dev \
     build-essential \
     g++
 
 # Install ffmpeg
 RUN apt-get update && apt-get install -y ffmpeg
-
+# Rebuild canvas untuk arsitektur yang sesuai
+RUN npm rebuild canvas --update-binary
 # Buat folder untuk menyimpan sesi WhatsApp
 RUN mkdir -p sessions
 
