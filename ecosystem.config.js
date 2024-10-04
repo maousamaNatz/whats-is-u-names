@@ -10,9 +10,9 @@ module.exports = {
       max_memory_restart: "400M", // Restart aplikasi jika penggunaan memori melebihi 500MB
       instances: 1,
       exec_mode: 'fork', // Atau 'cluster' jika Anda memerlukan cluste
-      env: {
+      env_production: {
         NODE_ENV: "development",
-        PORT: 3000,
+        PORT: process.env.PORT || 8080,
         PREFIX: ".",
         OWNER_NAME: "natzsixn",
         OWNER_PHONE: "6287748952040",
@@ -22,7 +22,7 @@ module.exports = {
       },
       env_production: {
         NODE_ENV: "production",
-        PORT: 8080,
+        PORT: process.env.PORT || 8080,
         PREFIX: ".",
         OWNER_NAME: "natzsixn",
         OWNER_PHONE: "6287748952040",

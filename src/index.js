@@ -6,17 +6,25 @@ const {
 const { Boom } = require("@hapi/boom");
 const path = require("path");
 const P = require("pino");
-const { handleGroupUpdate } = require("./libs/canvas");
 const fs = require("fs");
-const { getSessionQR } = require("./utils/session");
+const express = require("express");
 const db = require("./database/database");
+const { checkSpam } = require("./utils/spams");
+const { handleGroupUpdate } = require("./libs/canvas");
+const { getSessionQR } = require("./utils/session");
 const { createTables } = require("./database/createtbl");
 const { seedDatabase } = require("./database/seedDb");
-const express = require("express");
 const { saveBotToDatabase } = require("./database/svbot"); // Fungsi menyimpan bot ke database
 const { sendWhatsAppMessage } = require("./database/genewmember"); // Fungsi untuk mengirim pesan WhatsApp
 const asciiLogo = fs.readFileSync("./media/bot/logo.txt", "utf8");
-const { isBotSleeping, handleOwnerMessage, clearAllChats, isGroupAdmin, loadSleepModeStatus, setSleepMode } = require("./utils/permission");
+const {
+  isBotSleeping,
+  handleOwnerMessage,
+  clearAllChats,
+  isGroupAdmin,
+  loadSleepModeStatus,
+  setSleepMode,
+} = require("./utils/permission");
 global.isSleepModeActive = loadSleepModeStatus();
 const app = express();
 
@@ -30,11 +38,9 @@ app.use((req, res, next) => {
   next();
 });
 
-
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
-
 
 // Fungsi untuk memulai bot inti
 async function startBotInti() {
@@ -60,7 +66,10 @@ async function startBotInti() {
         console.log("Pesan berhasil dikirim ke owner");
         break;
       } catch (error) {
-        console.error(`Gagal mengirim pesan ke owner (percobaan ${4 - retries}/3):`, error.message);
+        console.error(
+          `Gagal mengirim pesan ke owner (percobaan ${4 - retries}/3):`,
+          error.message
+        );
         retries--;
         if (retries > 0) {
           console.log(`Mencoba kembali dalam 5 detik...`);
@@ -109,7 +118,6 @@ app.get("/create-session", async (req, res) => {
   }
 });
 
-
 // Fungsi untuk menghentikan session user
 app.get("/stop-session", (req, res) => {
   const userId = req.userId;
@@ -124,13 +132,11 @@ app.get("/stop-session", (req, res) => {
   res.send("Session dihentikan");
 });
 
-
 // Memulai server express
 app.listen(port, () => {
   console.log(`Server berjalan di port ${port}`);
   startBotInti(); // Mulai bot inti saat server dimulai
 });
-
 
 // Fungsi untuk memulai bot (baik bot inti maupun bot user)
 async function initiateBot(sessionPath, userId = "bot-inti", lifetime = 30) {
@@ -148,7 +154,6 @@ async function initiateBot(sessionPath, userId = "bot-inti", lifetime = 30) {
     }
   });
 
-
   const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
 
   const sock = makeWASocket({
@@ -156,12 +161,11 @@ async function initiateBot(sessionPath, userId = "bot-inti", lifetime = 30) {
     logger: P({ level: "silent" }),
     printQRInTerminal: true,
     browser: ["Bot Inti", "Chrome", "1.0"],
-    connectTimeoutMs: 60000,
+    connectTimeoutMs: 18000000,
     syncFullHistory: true,
     // Hapus baris berikut:
     // store: store,
   });
-
 
   // Load commands
   sock.commands = new Map();
@@ -173,31 +177,42 @@ async function initiateBot(sessionPath, userId = "bot-inti", lifetime = 30) {
     sock.commands.set(process.env.PREFIX + command.name, command);
   }
 
-
   // Menangani koneksi
   sock.ev.on("connection.update", async (update) => {
-    const { connection, lastDisconnect, qr } = update;
-
-    if (qr && userId !== "bot-inti") {
-      console.log(`QR Code untuk user ${userId}:`);
-    }
+    const { connection, lastDisconnect } = update;
 
     if (connection === "close") {
-      const shouldReconnect =
-        (lastDisconnect?.error instanceof Boom)?.output?.statusCode !==
-        DisconnectReason.loggedOut;
-      console.log(
-        "Koneksi terputus karena ",
-        lastDisconnect?.error,
-        ", Menghubungkan kembali ",
-        shouldReconnect
-      );
+      const statusCode = lastDisconnect?.error?.output?.statusCode;
+      const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+
+      console.log(`Koneksi terputus dengan status code: ${statusCode}`);
+
       if (shouldReconnect) {
-        setTimeout(() => initiateBot(sessionPath, userId, lifetime), 5000); // Retry after 5 seconds
+        if (statusCode === 515) {
+          console.log("Kesalahan stream terdeteksi. Mencoba memulai ulang...");
+          await delay(10000); // Tunggu 10 detik sebelum mencoba lagi
+          initiateBot(sessionPath, userId, lifetime);
+        } else {
+          console.log("Mencoba menghubungkan kembali...");
+          await delay(5000);
+          initiateBot(sessionPath, userId, lifetime);
+        }
+      } else {
+        console.log("Sesi telah logout. Menghapus sesi dan memulai ulang...");
+        if (fs.existsSync(sessionPath)) {
+          fs.rmdirSync(sessionPath, { recursive: true });
+        }
+        initiateBotq(sessionPath, userId, lifetime);
+      }
+
+      if (statusCode === 408) {
+        console.error("Request Timed Out. Mencoba menghubungkan kembali...");
+        await delay(5000); // Tunggu 5 detik sebelum mencoba lagi
+        initiateBot(sessionPath, userId, lifetime);
       }
     } else if (connection === "open") {
       console.log(`Session ${userId} siap digunakan`);
-
+      sessions[userId] = sock;
       // Hanya menyimpan bot user ke database, bukan bot inti
       if (userId !== "bot-inti") {
         const phoneNumber = sock.user.id.split(":")[0]; // Mendapatkan nomor bot
@@ -208,22 +223,22 @@ async function initiateBot(sessionPath, userId = "bot-inti", lifetime = 30) {
 
   // Menyimpan kredensial
   sock.ev.on("creds.update", saveCreds);
-  
+
   sock.ev.on("messages.upsert", async (msg) => {
     const message = msg.messages[0];
     const from = message.key.remoteJid;
     const sender = message.key.participant || from;
-    
+
     // Cek apakah pengirim adalah owner
     const isOwner = sender === process.env.OWNER_PHONE + "@s.whatsapp.net";
-    
+
     if (isOwner) {
       await handleOwnerMessage(sock, message);
     }
-    
-    const isSleeeping = isBotSleeping();
-    
-    if (isSleeeping && !isOwner) {
+
+    const isSleeping = isBotSleeping();
+
+    if (isSleeping && !isOwner) {
       if (
         message.key &&
         !message.key.fromMe &&
@@ -238,20 +253,7 @@ async function initiateBot(sessionPath, userId = "bot-inti", lifetime = 30) {
         if (!global.notifiedSenders.has(senderId)) {
           const clientName = message.pushName || "Pengguna";
           const ownerNumber = process.env.OWNER_PHONE;
-          const broadcastMessage = `*[ PEMBERITAHUAN PENTING ]*
-
-Halo ${clientName},
-
-Mohon maaf atas ketidaknyamanannya. Saat ini, layanan bot sedang dalam mode istirahat atau tidak aktif untuk sementara waktu.
-
-*Status:* Tidak Aktif ❌
-*Estimasi Aktif Kembali:* Belum Ditentukan
-
-Untuk informasi lebih lanjut atau permintaan pengaktifan kembali, silakan hubungi admin kami:
-
-👤 *@${ownerNumber}*
-
-Terima kasih atas pengertian dan kesabaran Anda. Kami akan segera kembali untuk melayani Anda!`;
+          const broadcastMessage = `*[ PEMBERITAHUAN PENTING ]*\n\nHalo ${clientName},\n\nMohon maaf atas ketidaknyamanannya. Saat ini, layanan bot sedang dalam mode istirahat atau tidak aktif untuk sementara waktu.\n\n*Status:* Tidak Aktif ❌\n*Estimasi Aktif Kembali:* Belum Ditentukan\n\nUntuk informasi lebih lanjut atau permintaan pengaktifan kembali, silakan hubungi admin kami:\n\n👤 *@${ownerNumber}*\n\nTerima kasih atas pengertian dan kesabaran Anda. Kami akan segera kembali untuk melayani Anda!`;
 
           try {
             await sock.sendMessage(senderId, {
@@ -261,20 +263,33 @@ Terima kasih atas pengertian dan kesabaran Anda. Kami akan segera kembali untuk 
               caption: broadcastMessage,
               mentions: [`${ownerNumber}@s.whatsapp.net`],
             });
-            global.notifiedSenders.add(senderId); // Tandai pengirim sebagai sudah diberi tahu
+            global.notifiedSenders.add(senderId);
           } catch (error) {
             console.error("Error saat mengirim pesan sleep mode:", error);
           }
         }
       }
     } else {
+      // Pengecekan null untuk message.message
       if (!message.message || message.key.fromMe) return;
 
       const text =
         message.message.conversation ||
         message.message.extendedTextMessage?.text ||
         "";
+
       const commandName = text.split(" ")[0].toLowerCase();
+
+      // Pengecekan spam
+      if (checkSpam(sender, message)) {
+        console.log(`Spam dari ${sender}`);
+        await sock.sendMessage(from, {
+          text: `⚠️ *Warning*: Anda memberikan pesan spam ke bot ini. Tunggu beberapa saat.`,
+        });
+        return;
+      }
+
+      // Eksekusi command jika ditemukan
       if (sock.commands.has(commandName)) {
         console.log(`Command ${commandName} ditemukan`);
         const command = sock.commands.get(commandName);
@@ -282,6 +297,23 @@ Terima kasih atas pengertian dan kesabaran Anda. Kami akan segera kembali untuk 
           await command.execute(sock, message);
         } catch (error) {
           console.error(`[ERROR] ${error}`);
+        }
+      }
+
+      const prefix = process.env.PREFIX;
+      // Execute the !clearmessage command
+      if (commandName === `${prefix}clear`) {
+        const isAdmin = await isGroupAdmin(sock, sender, from); // Check if user is admin
+        if (isOwner || isAdmin) {
+          console.log("Executing clear all messages command");
+          await clearAllChats(sock);
+          await sock.sendMessage(from, {
+            text: "Semua pesan telah dibersihkan.",
+          });
+        } else {
+          await sock.sendMessage(from, {
+            text: "Anda tidak memiliki izin untuk menjalankan perintah ini.",
+          });
         }
       }
     }
@@ -296,5 +328,34 @@ Terima kasih atas pengertian dan kesabaran Anda. Kami akan segera kembali untuk 
   return sock;
 }
 
+async function retryOperation(retries, operation, delayTime) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      if (
+        attempt === retries ||
+        (error.isBoom && error.output.statusCode === 408)
+      ) {
+        console.error(`Operation failed after ${attempt} retries`);
+        throw error; // Lempar error jika gagal setelah beberapa kali mencoba
+      }
+      console.log(
+        `Retrying in ${delayTime / 1000} seconds... (${attempt}/${retries})`
+      );
+      await delay(delayTime);
+    }
+  }
+}
+
+// Fungsi main untuk menjalankan retryOperation
+async function main() {
+  const sessionPath = "./sessions/whatsapp-session-bot-inti";
+  const userId = "bot-inti";
+  await retryOperation(3, () => initiateBot(sessionPath, userId), 5000);
+}
+
+// Jalankan fungsi main
+main().catch((error) => console.error("Error in main function:", error));
 
 module.exports = { initiateBot };

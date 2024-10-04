@@ -1,73 +1,79 @@
 const { writeExifImg, writeExifVid } = require('../libs/exif');
-const fs = require('fs');
 const fileType = require('file-type');
+const { downloadContentFromMessage } = require('@whiskeysockets/baileys'); // Import function untuk download media
 
 module.exports = {
   name: 's' || 'sticker',
   description: 'Membuat stiker dari gambar atau video yang dikirim',
   async execute(sock, message) {
     const from = message.key.remoteJid;
-    const mediaMessage = message.message.imageMessage || message.message.videoMessage;
-
-    console.log('Media message:', mediaMessage);
+    
+    // Cek apakah ada pesan media yang diterima (gambar atau video)
+    const mediaMessage = 
+      message.message?.imageMessage || // Pesan gambar
+      message.message?.videoMessage || // Pesan video
+      message.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage || // Cek apakah ada gambar yang dikutip
+      message.message?.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage;   // Cek apakah ada video yang dikutip
 
     if (!mediaMessage) {
+      // Jika tidak ada media, kirim pesan error
       await sock.sendMessage(from, { text: 'Silakan kirim gambar atau video untuk dijadikan stiker.' });
       return;
     }
 
     try {
-      console.log('Downloading media...');
-      const mediaBuffer = await sock.downloadMediaMessage(mediaMessage);
-      console.log('Media buffer downloaded:', mediaBuffer);
+      console.log('Media message detected, downloading media...');
 
+      // Fungsi untuk mengunduh media menggunakan `downloadContentFromMessage`
+      const stream = await downloadContentFromMessage(mediaMessage, mediaMessage.mimetype.includes('video') ? 'video' : 'image');
+      let mediaBuffer = Buffer.from([]);
+
+      // Menggabungkan buffer dari stream
+      for await (const chunk of stream) {
+        mediaBuffer = Buffer.concat([mediaBuffer, chunk]);
+      }
+
+      // Cek tipe file
       const mimeType = await fileType.fromBuffer(mediaBuffer);
       console.log('MIME type:', mimeType);
 
+      // Periksa apakah media adalah gambar atau video dengan format yang valid
       if (
         mimeType.mime !== "image/gif" &&
         mimeType.mime !== "image/jpeg" &&
         mimeType.mime !== "image/png" &&
         mimeType.mime !== "video/mp4"
       ) {
-        console.log("Format media bukan GIF, JPEG, PNG, atau MP4, pembuatan stiker dibatalkan.");
-        await sock.sendMessage(from, { text: "Gagal membuat stiker: format media bukan GIF, JPEG, PNG, atau MP4." });
+        await sock.sendMessage(from, { text: "Format media tidak didukung. Silakan kirim GIF, JPEG, PNG, atau MP4." });
         return;
       }
 
       let stickerBuffer;
-      try {
-        if (mimeType.mime.startsWith("image/")) {
-          console.log('Membuat stiker dari gambar');
-          stickerBuffer = await writeExifImg(mediaBuffer, {
-            packname: process.env.STICKER_PACK_NAME || 'My Sticker Pack',
-            author: process.env.STICKER_AUTHOR || 'Bot Author',
-            categories: process.env.STICKER_CATEGORIES ? process.env.STICKER_CATEGORIES.split(",") : []
-          });
-        } else if (mimeType.mime === "video/mp4") {
-          console.log('Membuat stiker dari video');
-          stickerBuffer = await writeExifVid(mediaBuffer, {
-            packname: process.env.STICKER_PACK_NAME || 'My Sticker Pack',
-            author: process.env.STICKER_AUTHOR || 'Bot Author',
-            categories: process.env.STICKER_CATEGORIES ? process.env.STICKER_CATEGORIES.split(",") : []
-          });
-        }
+      if (mimeType.mime.startsWith("image/")) {
+        // Buat stiker dari gambar
+        stickerBuffer = await writeExifImg(mediaBuffer, {
+          packname: process.env.STICKER_PACK_NAME || 'My Sticker Pack',
+          author: process.env.STICKER_AUTHOR || 'Bot Author',
+          categories: process.env.STICKER_CATEGORIES ? process.env.STICKER_CATEGORIES.split(",") : []
+        });
+      } else if (mimeType.mime === "video/mp4") {
+        // Buat stiker dari video
+        stickerBuffer = await writeExifVid(mediaBuffer, {
+          packname: process.env.STICKER_PACK_NAME || 'My Sticker Pack',
+          author: process.env.STICKER_AUTHOR || 'Bot Author',
+          categories: process.env.STICKER_CATEGORIES ? process.env.STICKER_CATEGORIES.split(",") : []
+        });
+      }
 
-        console.log('Sticker buffer created:', stickerBuffer);
-
-        if (!Buffer.isBuffer(stickerBuffer)) {
-          throw new TypeError('Sticker buffer harus berupa buffer');
-        }
-
+      // Kirim stiker jika buffer valid
+      if (stickerBuffer && Buffer.isBuffer(stickerBuffer)) {
         await sock.sendMessage(from, { sticker: stickerBuffer });
-        console.log("Stiker berhasil dikirim.");
-      } catch (error) {
-        console.error("Gagal membuat stiker:", error);
-        await sock.sendMessage(from, { text: "Gagal membuat stiker." });
+      } else {
+        throw new Error('Gagal membuat stiker, buffer tidak valid');
       }
     } catch (error) {
-      console.error("Error saat memproses media:", error);
-      await sock.sendMessage(from, { text: "Terjadi kesalahan saat memproses media." });
+      console.error("Gagal membuat stiker:", error);
+      await sock.sendMessage(from, { text: "Terjadi kesalahan saat membuat stiker." });
     }
   }
 };

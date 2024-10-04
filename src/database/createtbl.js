@@ -30,6 +30,18 @@ const createTables = () => {
     );
   `;
 
+  const createAiTokensTable = `
+    CREATE TABLE IF NOT EXISTS ai_tokens (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      ai_model VARCHAR(50) NOT NULL,
+      tokens_left INT NOT NULL DEFAULT 12,
+      last_used TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id),
+      UNIQUE KEY user_model (user_id, ai_model)
+    );
+  `;
+
   db.query(createRolesTable, (err) => {
     if (err) {
       console.error("Error creating roles table:", err);
@@ -51,6 +63,14 @@ const createTables = () => {
       console.error("Error creating bots table:", err);
     } else {
       console.log("Bots table created or already exists.");
+    }
+  });
+
+  db.query(createAiTokensTable, (err) => {
+    if (err) {
+      console.error("Error creating ai_tokens table:", err);
+    } else {
+      console.log("ai_tokens table created or already exists");
     }
   });
 };

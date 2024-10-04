@@ -3,8 +3,8 @@ const axios = require("axios");
 // Gunakan URL baru untuk endpoint chat completions
 const apikey = process.env.API_KEY;
 const url = process.env.URL_AI;
-
-const ai_api = process.env.AI_API;
+const gifted_api = 'https://api.giftedtechnexus.co.ke/api/';
+const ai_api = 'https://api.vihangayt.com/';
 
 // Metode asli yang mengelola satu pertanyaan
 async function gemini15flashs(question) {
@@ -250,12 +250,33 @@ async function chatgptFallback(query) {
 }
 async function stableDiff(query) {
   const encodedQuery = encodeURIComponent(query);
-  const url = `ai/sd?prompt=${encodedQuery}&apikey=giftedtechk`;
-  const response = await axios.get(gifted_api + url, {
-    responseType: "arraybuffer",
-  });
-  const buffer = Buffer.from(response.data);
-  return buffer;
+  const url = `${gifted_api}ai/sd?prompt=${encodedQuery}&apikey=giftedtechk`;
+  try {
+    const response = await axios.get(url, {
+      responseType: "arraybuffer",
+      timeout: 10000 // Tambahkan timeout 10 detik
+    });
+    return Buffer.from(response.data);
+  } catch (error) {
+    console.error("Error accessing Stable Diffusion API:", error.message);
+    // Coba gunakan API alternatif jika API utama gagal
+    return await stableDiffAlternative(query);
+  }
+}
+
+async function stableDiffAlternative(query) {
+  const encodedQuery = encodeURIComponent(query);
+  const url = `${ai_api}api/stablediffusion?prompt=${encodedQuery}`;
+  try {
+    const response = await axios.get(url, {
+      responseType: "arraybuffer",
+      timeout: 15000 // Tambahkan timeout 15 detik untuk API alternatif
+    });
+    return Buffer.from(response.data);
+  } catch (error) {
+    console.error("Error accessing alternative Stable Diffusion API:", error.message);
+    throw new Error("Tidak dapat mengakses layanan Stable Diffusion saat ini.");
+  }
 }
 async function lamda(question) {
   const trimquestion = question.trim();

@@ -1,8 +1,8 @@
-const { dalle } = require("../libs/ai");
+const { dalle, askAi } = require("../libs/ai");
 const { checkAuth } = require("../database/auth");
 module.exports = {
   name: "dalle",
-  // middleware: checkAuth(["admin", "owner"]),
+  middleware: checkAuth(["admin", "owner"]),
   description: "Menggunakan AI dalle untuk menjawab pertanyaan",
   async execute(sock, message) {
     const from = message.key.remoteJid;
@@ -39,10 +39,7 @@ module.exports = {
 
     try {
       // Panggil API DALL-E untuk menghasilkan gambar dengan resolusi yang diberikan
-      const imageBuffer = await dalle({
-        prompt: query,
-        size: resolution,
-      });
+      const imageBuffer = await dalle({prompt: query,size: resolution}).catch(() => askAi({prompt: query,size: resolution}));
 
       // Kirim gambar sebagai buffer
       await sock.sendMessage(from, {

@@ -8,13 +8,6 @@ module.exports = {
     const from = message.key.remoteJid;
     const query = message.message.conversation;
 
-    // if (!query) {
-    //   await sock.sendMessage(from, {
-    //     text: "Silakan masukkan pertanyaan Anda.",
-    //   });
-    //   return;
-    // }
-
     try {
       let response = await askAi("lepton", query);
       await sock.sendMessage(from, {
