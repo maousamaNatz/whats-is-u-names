@@ -149,9 +149,12 @@ async function initiateBot(sessionPath, userId = "bot-inti", lifetime = 30) {
     auth: state,
     logger: P({ level: "silent" }),
     printQRInTerminal: true,
-    browser: ["Bot Inti", "Chrome", "1.0"],
-    connectTimeoutMs: 30000000,
-    syncFullHistory: true,
+    browser: ["Ubuntu", "Chrome", "20.0.04"],
+    connectTimeoutMs: 60_000,
+    defaultQueryTimeoutMs: 0,
+    keepAliveIntervalMs: 10000,
+    emitOwnEvents: false,
+    retryRequestDelayMs: 250,
   });
 
   // Load commands
@@ -249,10 +252,40 @@ async function initiateBot(sessionPath, userId = "bot-inti", lifetime = 30) {
       }
     } else {
       if (!message.message || message.key.fromMe) return;
+      let text = "";
 
-      const text = message.message.conversation || message.message.extendedTextMessage?.text || "";
-      const commandName = text.split(" ")[0].toLowerCase();
-
+      if (message.message?.conversation) {
+        text = message.message.conversation;
+      } else if (message.message?.imageMessage?.caption) {
+        text = message.message.imageMessage.caption;
+      } else if (message.message?.videoMessage?.caption) {
+        text = message.message.videoMessage.caption;
+      } else if (message.message?.extendedTextMessage?.text) {
+        text = message.message.extendedTextMessage.text;
+      } else if (message.message?.documentMessage?.caption) {
+        text = message.message.documentMessage.caption;
+      } else if (message.message?.audioMessage) {
+        text = "Pesan suara diterima.";
+      } else if (message.message?.stickerMessage) {
+        text = "Pesan stiker diterima.";
+      } else {
+        text = "Format pesan tidak dikenali.";
+      }
+      
+      // Pastikan text adalah string sebelum memanggil split
+      if (typeof text === "string" && text.trim().length > 0) {
+        const commandName = text.split(" ")[0].toLowerCase();
+        
+        if (sock?.commands?.has(commandName)) {
+          const command = sock.commands.get(commandName);
+          try {
+            await command.execute(sock, message);
+          } catch (error) {
+            console.error(`[ERROR] ${error}`);
+          }
+        }
+      }
+      
       if (checkSpam(sender, message)) {
         console.log(`Spam dari ${sender}`);
         await sock.sendMessage(from, {

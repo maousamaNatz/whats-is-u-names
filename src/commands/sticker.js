@@ -7,7 +7,6 @@ module.exports = {
   description: 'Membuat stiker dari gambar atau video yang dikirim',
   async execute(sock, message) {
     const from = message.key.remoteJid;
-
     // Cek apakah ada pesan media yang diterima (gambar atau video)
     const mediaMessage =
       message.message?.imageMessage || // Pesan gambar tanpa caption
