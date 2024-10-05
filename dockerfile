@@ -25,6 +25,7 @@ RUN apt-get update && apt-get install -y \
 
 # Install ffmpeg
 RUN apt-get update && apt-get install -y ffmpeg
+
 # Rebuild canvas untuk arsitektur yang sesuai
 RUN npm rebuild canvas --update-binary
 # Buat folder untuk menyimpan sesi WhatsApp
