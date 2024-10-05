@@ -2,6 +2,7 @@ const {
   default: makeWASocket,
   useMultiFileAuthState,
   DisconnectReason,
+  makeInMemoryStore, // Tambahkan ini untuk membuat store
 } = require("@whiskeysockets/baileys");
 const { Boom } = require("@hapi/boom");
 const path = require("path");
@@ -33,6 +34,21 @@ let botInti;
 const port = process.env.PORT || 3000;
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
+
+const storeDir = path.join(__dirname, "../session/whatsapp-session-bot-inti");
+if (!fs.existsSync(storeDir)) {
+  fs.mkdirSync(storeDir, { recursive: true });
+}
+
+// Buat store in-memory untuk menyimpan chats dan kontak
+const store = makeInMemoryStore({
+  logger: P().child({ level: "silent", stream: "store" }),
+});
+const storeFile = path.join(storeDir, "store.json");
+store.readFromFile(storeFile);
+setInterval(() => {
+  store.writeToFile(storeFile);
+}, 10000);
 
 app.use((req, res, next) => {
   req.userId = req.query.userId || 1;
@@ -157,6 +173,9 @@ async function initiateBot(sessionPath, userId = "bot-inti", lifetime = 30) {
     retryRequestDelayMs: 250,
   });
 
+  // Hubungkan store dengan socket
+  store.bind(sock.ev);
+
   // Load commands
   sock.commands = new Map();
   const commandFiles = fs
@@ -179,18 +198,26 @@ async function initiateBot(sessionPath, userId = "bot-inti", lifetime = 30) {
         if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
           reconnectAttempts++;
           if (statusCode === 440) {
-            console.log("Koneksi terputus. Mencoba reconnect dalam 15 detik...");
+            console.log(
+              "Koneksi terputus. Mencoba reconnect dalam 15 detik..."
+            );
             await delay(15000);
           } else if (statusCode === 515) {
-            console.log("Kesalahan stream terdeteksi. Mencoba memulai ulang...");
+            console.log(
+              "Kesalahan stream terdeteksi. Mencoba memulai ulang..."
+            );
             await delay(10000);
           } else if (statusCode === 408) {
-            console.error("Request Timed Out. Mencoba menghubungkan kembali...");
+            console.error(
+              "Request Timed Out. Mencoba menghubungkan kembali..."
+            );
             await delay(5000);
           }
           await initiateBot(sessionPath, userId, lifetime);
         } else {
-          console.error("Maksimum reconnect attempts tercapai. Bot akan berhenti.");
+          console.error(
+            "Maksimum reconnect attempts tercapai. Bot akan berhenti."
+          );
         }
       } else {
         console.log("Sesi telah logout. Menghapus sesi dan memulai ulang...");
@@ -207,6 +234,9 @@ async function initiateBot(sessionPath, userId = "bot-inti", lifetime = 30) {
         const phoneNumber = sock.user.id.split(":")[0];
         saveBotToDatabase(phoneNumber, sessionPath, lifetime);
       }
+
+      // Jalankan scan saat pertama kali bot menyala
+      await scanUnreadMessages(sock);
     }
   });
 
@@ -217,6 +247,15 @@ async function initiateBot(sessionPath, userId = "bot-inti", lifetime = 30) {
     const from = message.key.remoteJid;
     const sender = message.key.participant || from;
 
+    // Cek apakah pesan belum terbaca dan bukan dari bot itu sendiri
+    if (!message.key.fromMe && message.message && !message.key.read) {
+      try {
+        await sock.readMessages([message.key]); // Tandai sebagai sudah dibaca
+      } catch (error) {
+        console.error("Error menandai pesan sebagai sudah dibaca:", error);
+      }
+    }
+
     const isOwner = sender === process.env.OWNER_PHONE + "@s.whatsapp.net";
     if (isOwner) {
       await handleOwnerMessage(sock, message);
@@ -224,7 +263,11 @@ async function initiateBot(sessionPath, userId = "bot-inti", lifetime = 30) {
 
     const isSleeping = isBotSleeping();
     if (isSleeping && !isOwner) {
-      if (message.key && !message.key.fromMe && message.key.remoteJid !== "status@broadcast") {
+      if (
+        message.key &&
+        !message.key.fromMe &&
+        message.key.remoteJid !== "status@broadcast"
+      ) {
         const senderId = message.key.remoteJid;
 
         if (!global.notifiedSenders) {
@@ -252,8 +295,9 @@ async function initiateBot(sessionPath, userId = "bot-inti", lifetime = 30) {
       }
     } else {
       if (!message.message || message.key.fromMe) return;
-      let text = "";
 
+      // Extract the text message
+      let text = "";
       if (message.message?.conversation) {
         text = message.message.conversation;
       } else if (message.message?.imageMessage?.caption) {
@@ -271,21 +315,21 @@ async function initiateBot(sessionPath, userId = "bot-inti", lifetime = 30) {
       } else {
         text = "Format pesan tidak dikenali.";
       }
-      
-      // Pastikan text adalah string sebelum memanggil split
+
+      // Validate if text is a string and not empty
       if (typeof text === "string" && text.trim().length > 0) {
-        const commandName = text.split(" ")[0].toLowerCase();
-        
+        const commandName = text.split(" ")[0].toLowerCase(); // Extract command name
+
         if (sock?.commands?.has(commandName)) {
           const command = sock.commands.get(commandName);
           try {
-            await command.execute(sock, message);
+            await command.execute(sock, message); // Execute the command
           } catch (error) {
             console.error(`[ERROR] ${error}`);
           }
         }
       }
-      
+
       if (checkSpam(sender, message)) {
         console.log(`Spam dari ${sender}`);
         await sock.sendMessage(from, {
@@ -293,34 +337,29 @@ async function initiateBot(sessionPath, userId = "bot-inti", lifetime = 30) {
         });
         return;
       }
-
-      if (sock?.commands?.has(commandName)) { // Fix undefined issue
-        console.log(`Command ${commandName} ditemukan`);
-        const command = sock.commands.get(commandName);
-        try {
-          await command.execute(sock, message);
-        } catch (error) {
-          console.error(`[ERROR] ${error}`);
-        }
-      }
-
-      const prefix = process.env.PREFIX;
-      if (commandName === `${prefix}clear`) {
-        const isAdmin = await isGroupAdmin(sock, sender, from);
-        if (isOwner || isAdmin) {
-          console.log("Executing clear all messages command");
-          await clearAllChats(sock);
-          await sock.sendMessage(from, {
-            text: "Semua pesan telah dibersihkan.",
-          });
-        } else {
-          await sock.sendMessage(from, {
-            text: "Anda tidak memiliki izin untuk menjalankan perintah ini.",
-          });
-        }
-      }
     }
   });
+
+  // Fungsi untuk menscan pesan yang belum terbaca atau belum dibalas
+  async function scanUnreadMessages(sock) {
+    try {
+      const chats = store.chats.all(); // Ambil semua chat dari store
+      for (const chat of chats) {
+        const jid = chat.id;
+
+        // Ambil pesan terakhir dari store
+        const messages = store.messages[jid].array.slice(-50); // Load 50 pesan terakhir dari store
+        for (const message of messages) {
+          // Cek apakah pesan belum terbaca dan belum dibalas oleh bot
+          if (!message.key.fromMe && !message.key.read) {
+            await sock.readMessages([message.key]); // Tandai sebagai dibaca
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error saat scan pesan belum terbaca:", error);
+    }
+  }
 
   sock.ev.on("group-participants.update", async (update) => {
     await handleGroupUpdate(sock, update);
@@ -344,7 +383,10 @@ async function retryOperation(retries, operation, delayTime) {
     try {
       return await operation();
     } catch (error) {
-      if (attempt === retries || (error.isBoom && error.output.statusCode === 408)) {
+      if (
+        attempt === retries ||
+        (error.isBoom && error.output.statusCode === 408)
+      ) {
         console.error(`Operation failed after ${attempt} retries`);
         throw error;
       }

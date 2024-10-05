@@ -14,6 +14,11 @@ const users = [
     role: "user",
     lifetime: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
   },
+  {
+    phone: "6281215911578",
+    role: "user",
+    lifetime: null,
+  },
 ];
 
 // Fungsi untuk menambahkan role jika belum ada

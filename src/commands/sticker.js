@@ -67,6 +67,9 @@ module.exports = {
       // Kirim stiker jika buffer valid
       if (stickerBuffer && Buffer.isBuffer(stickerBuffer)) {
         await sock.sendMessage(from, { sticker: stickerBuffer });
+        if (tempFilePath) {
+          fs.unlinkSync(tempFilePath);
+        }
       } else {
         throw new Error('Gagal membuat stiker, buffer tidak valid');
       }

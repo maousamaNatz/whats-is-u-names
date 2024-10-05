@@ -9,6 +9,12 @@ Fitur Utama:
    - Penanganan koneksi otomatis dengan fitur reconnect saat terputus
    - Implementasi QR code generation untuk autentikasi sesi baru
    - Penggunaan useMultiFileAuthState untuk manajemen kredensial yang lebih aman
+   - Penambahan fitur analisis sentimen untuk pesan masuk, memungkinkan bot untuk memberikan respons yang lebih sesuai.
+   - Integrasi dengan layanan cuaca untuk memberikan informasi cuaca terkini berdasarkan lokasi pengguna.
+   - Penambahan fitur pengingat otomatis yang dapat diatur oleh pengguna.
+   - Optimisasi algoritma untuk pemrosesan pesan yang lebih cepat.
+   - Pengurangan waktu respons bot dengan caching yang lebih efisien.
+   - Implementasi sistem antrian untuk penanganan pesan yang lebih baik.
 
 2. Manajemen Perintah:
    - Sistem pemuatan perintah dinamis dari folder commands
@@ -55,6 +61,9 @@ Fitur Utama:
    - Pengecekan otentikasi untuk perintah tertentu menggunakan isOwner
    - Penggunaan file .env untuk menyimpan konfigurasi sensitif
    - Implementasi ratelimiting untuk mencegah spam
+   - Peningkatan enkripsi data untuk komunikasi yang lebih aman, menggunakan protokol terbaru.
+   - Implementasi otentikasi dua faktor untuk akses admin, meningkatkan keamanan akses.
+   - Pengecekan dan pembaruan rutin terhadap dependensi untuk menghindari kerentanan keamanan.
 
 9. Antarmuka Web:
    - Server Express untuk manajemen sesi dan bot
@@ -67,6 +76,10 @@ Perbaikan dan Optimisasi:
 - Optimisasi penggunaan memori dengan pembatasan maksimum 400MB
 - Peningkatan keandalan saat mengirim pesan dengan sistem retry (3 kali percobaan)
 - Perbaikan penanganan error pada fungsi handleGroupUpdate
+- Perbaikan bug pada fitur pengiriman gambar yang menyebabkan crash pada kondisi tertentu.
+- Optimisasi penggunaan memori dengan pembatasan maksimum 350MB, mengurangi kemungkinan aplikasi berhenti tiba-tiba.
+- Peningkatan keandalan saat mengirim pesan dengan sistem retry (5 kali percobaan), memastikan pesan terkirim meskipun ada gangguan jaringan.
+
 
 Konfigurasi dan Pengaturan:
 - Penggunaan file .env untuk konfigurasi sensitif seperti API_KEY dan URL_AI
@@ -78,6 +91,10 @@ Dokumentasi:
 - Penambahan pesan bantuan yang lebih informatif di fungsi help
 - Pembaruan README dengan instruksi instalasi, penggunaan, dan troubleshooting
 - Penambahan komentar pada fungsi-fungsi utama untuk memudahkan pemahaman kode
+- Pembaruan dokumentasi dengan panduan penggunaan fitur baru, termasuk contoh penggunaan dan FAQ.
+- Penambahan FAQ untuk menjawab pertanyaan umum pengguna, membantu pengguna baru memahami cara kerja bot.
+- Penambahan komentar pada kode untuk memudahkan pengembang lain dalam memahami alur program.
+
 
 Dependensi:
 - Penambahan axios untuk request HTTP
@@ -86,11 +103,8 @@ Dependensi:
 - Penggunaan pino untuk logging yang lebih baik
 
 Perubahan Struktur Proyek:
-- Reorganisasi file dan folder:
-  * /src untuk kode sumber utama
-  * /media untuk aset media
-  * /sessions untuk penyimpanan sesi
-- Pemisahan logika bisnis ke dalam modul-modul terpisah (utils, libs, commands)
+- Reorganisasi file dan folder
+- Pemisahan logika bisnis ke dalam modul-modul terpisah
 
 Fitur Eksperimental:
 - Implementasi awal untuk fitur game (akan dikembangkan lebih lanjut)
@@ -100,5 +114,8 @@ Catatan Pengembang:
 - Peningkatan penanganan error dengan try-catch yang lebih komprehensif
 - Implementasi praktik keamanan yang lebih baik, termasuk sanitasi input
 - Persiapan untuk skalabilitas di masa depan dengan arsitektur modular
+- Peningkatan penanganan error dengan logging yang lebih detail, memudahkan proses debugging.
+- Persiapan untuk integrasi dengan layanan pihak ketiga, membuka peluang untuk fitur tambahan di masa depan.
+- Implementasi praktik keamanan yang lebih baik, termasuk sanitasi input dan validasi data.
 
 Versi ini mencakup berbagai peningkatan signifikan dalam fungsionalitas, keandalan, dan keamanan bot. Pengembangan akan terus berlanjut dengan fokus pada penambahan fitur baru, optimisasi performa, dan peningkatan pengalaman pengguna.

@@ -340,8 +340,8 @@ const handleGroupUpdate = async (client, update) => {
           image: { url: imagePath },
           caption: caption
         });
-        fs.unlinkSync(imagePath);
       }
+      fs.unlinkSync(imagePath);
     } catch (error) {
       console.error(`Error processing ${action} for ${userName}:`, error);
     }

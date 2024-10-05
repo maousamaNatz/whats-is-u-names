@@ -41,6 +41,7 @@ Halo! Saya adalah bot yang siap membantu Anda dalam berbagai kebutuhan sehari-ha
 6.) *GPT-4O* : Versi lebih ringan dari GPT-4
 7.) *Blackbox* : AI khusus untuk membantu kode otomatis
 8.) *DALL·E* : Buat gambar dari teks dengan AI kreatif
+9.) *Gemini 1.5 Flash* : Model AI untuk pemrosesan cepat
 
 ──────────────────
 *🎮 Game Commands:*
@@ -50,13 +51,14 @@ Halo! Saya adalah bot yang siap membantu Anda dalam berbagai kebutuhan sehari-ha
 ──────────────────
 *👥 Group Commands:*
 ──────────────────
-2.) *.mute* : Matikan notifikasi grup (Hanya admin)
-3.) *.unmute* : Aktifkan kembali notifikasi grup (Hanya admin) *ONGOING*
-4.) *.clearall* : Hapus semua pesan di grup (Hanya admin) *ONGOING*
-5.) *.kick* : mengeluarkan member dari grup (Hanya admin)
-6.) *.add* : Tambahkan member ke grup (Hanya admin)
-7.) *.silent* : membuat group agar hanya admin yang bisa mengirim pesan
-8.) *.promote* : mempromosikan member ke admin (Hanya admin) *ONGOING*
+1.) *.add* : Tambahkan member ke grup (Hanya admin)
+2.) *.promote* : Mempromosikan member ke admin (Hanya admin)
+3.) *.adduser* : Tambahkan pengguna baru dengan role dan lifetime
+4.) *.mute* : Matikan notifikasi grup (Hanya admin)
+5.) *.unmute* : Aktifkan kembali notifikasi grup (Hanya admin) *ONGOING*
+6.) *.clearall* : Hapus semua pesan di grup (Hanya admin) *ONGOING*
+7.) *.kick* : Mengeluarkan member dari grup (Hanya admin)
+8.) *.silent* : Membuat group agar hanya admin yang bisa mengirim pesan
 
 ⚠️ *Coming Soon!* Fitur menarik untuk pengelolaan grup.
 

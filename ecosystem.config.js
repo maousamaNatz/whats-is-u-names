@@ -16,8 +16,8 @@ module.exports = {
         PREFIX: "." || "/" || "./" || "!",
         OWNER_NAME: "natzsixn",
         OWNER_PHONE: "6287748952040",
-        STICKER_PACK_NAME: "My Sticker Pack",
-        STICKER_AUTHOR: "Bot Author",
+        STICKER_PACK_NAME: "shikanoko",
+        STICKER_AUTHOR: "shikanoko Bot ~ Natz",
         STICKER_CATEGORIES: "fun,whatsapp"
       },
       env_production: {
@@ -26,8 +26,8 @@ module.exports = {
         PREFIX: "." || "/" || "./" || "!",
         OWNER_NAME: "natzsixn",
         OWNER_PHONE: "6287748952040",
-        STICKER_PACK_NAME: "My Sticker Pack",
-        STICKER_AUTHOR: "Bot Author",
+        STICKER_PACK_NAME: "shikanoko",
+        STICKER_AUTHOR: "shikanoko Bot ~ Natz",
         STICKER_CATEGORIES: "fun,whatsapp"
       },
       // Hooks untuk membersihkan cache
