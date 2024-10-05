@@ -1,2 +1,5 @@
 ./node_modules
 .env
+Dockerfile
+heroku.yml
+docker-compose.yml
