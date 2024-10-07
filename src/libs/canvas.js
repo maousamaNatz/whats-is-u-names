@@ -54,9 +54,9 @@ const downloadImage = async (url, filepath) => {
 
 const downloadProfileImage = async (client, id) => {
   try {
-    const url = await client.profilePictureUrl(id, 'image');
-    const response = await axios.get(url, { responseType: 'arraybuffer' });
-    return Buffer.from(response.data, 'binary');
+    const url = await client.profilePictureUrl(id, "image");
+    const response = await axios.get(url, { responseType: "arraybuffer" });
+    return Buffer.from(response.data, "binary");
   } catch (error) {
     console.error(`Error downloading profile image: ${error.message}`);
     return null;
@@ -313,7 +313,10 @@ const createGoodbyeImage = async (
 
 const handleGroupUpdate = async (client, update) => {
   const { participants, action, id } = update;
-  const groupName = await client.groupMetadata(id).then(metadata => metadata.subject).catch(() => "Group");
+  const groupName = await client
+    .groupMetadata(id)
+    .then((metadata) => metadata.subject)
+    .catch(() => "Group");
   const idgroup = id;
 
   for (const participant of participants) {
@@ -328,20 +331,36 @@ const handleGroupUpdate = async (client, update) => {
 
       let imagePath, caption;
       if (action === "add") {
-        imagePath = await createWelcomeImage(groupName, userName, groupImageBuffer, userImageBuffer);
+        imagePath = await createWelcomeImage(
+          groupName,
+          userName,
+          groupImageBuffer,
+          userImageBuffer
+        );
         caption = `Selamat datang, ${userName}!`;
       } else if (action === "remove") {
-        imagePath = await createGoodbyeImage(groupName, userName, groupImageBuffer, userImageBuffer);
+        imagePath = await createGoodbyeImage(
+          groupName,
+          userName,
+          groupImageBuffer,
+          userImageBuffer
+        );
         caption = `Selamat tinggal, ${userName}!`;
       }
 
       if (imagePath) {
         await client.sendMessage(id, {
           image: { url: imagePath },
-          caption: caption
+          caption: caption,
         });
+        
+        if (fs.existsSync(imagePath)) {
+          fs.unlinkSync(imagePath);
+          console.log(`File at path ${imagePath} deleted.`);
+        } else {
+          console.error(`File at path ${imagePath} does not exist.`);
+        }
       }
-      fs.unlinkSync(imagePath);
     } catch (error) {
       console.error(`Error processing ${action} for ${userName}:`, error);
     }

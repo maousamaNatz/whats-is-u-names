@@ -1,7 +1,8 @@
-const { isGroupAdmin } = require("../utils/permission");
-
+// const { isGroupAdmin } = require("../utils/permission");
+const { checkAuth } = require("../database/auth");
 module.exports = {
   name: "createGroup",
+  middleware: checkAuth(["admin", "owner"]),
   description: "Membuat grup baru dengan anggota yang disebutkan",
   async execute(sock, message) {
     const from = message.key.remoteJid;

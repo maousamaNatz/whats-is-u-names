@@ -11,7 +11,7 @@ module.exports = {
     const args = text.split(" ").slice(1);
     
     if (args.length === 0) {
-      await sock.sendMessage(from, { text: 'Silakan masukkan URL website yang ingin di-screenshot.' });
+      await sock.sendMessage(from, { text: 'Silakan masukkan URL website yang ingin di-screenshot.', quoted: message });
       return;
     }
 
@@ -22,11 +22,12 @@ module.exports = {
       await takeScreenshot(url, screenshotPath);
       await sock.sendMessage(from, { 
         image: { url: screenshotPath },
-        caption: `Screenshot dari ${url}`
+        caption: `Screenshot dari ${url}`,
+        quoted: message
       });
     } catch (error) {
       console.error('Error saat mengambil screenshot:', error);
-      await sock.sendMessage(from, { text: 'Terjadi kesalahan saat mengambil screenshot. Pastikan URL valid dan dapat diakses.' });
+      await sock.sendMessage(from, { text: 'Terjadi kesalahan saat mengambil screenshot. Pastikan URL valid dan dapat diakses.', quoted: message });
     }
   }
 };

@@ -44,7 +44,7 @@ module.exports = {
       weather += `Matahari terbit: ${sunrise}\n`;
       weather += `Matahari terbenam: ${sunset}`;
 
-      await sock.sendMessage(from, { text: weather });
+      await sock.sendMessage(from, { text: weather, quoted: message });
     } catch (error) {
       console.error('Error:', error.message);
       if (error.response) {

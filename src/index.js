@@ -1,3 +1,8 @@
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Aplikasi tidak akan crash, tapi Anda bisa menambahkan logika tambahan di sini
+});
+
 const {
   default: makeWASocket,
   useMultiFileAuthState,
@@ -15,7 +20,7 @@ const { handleGroupUpdate } = require("./libs/canvas");
 const { getSessionQR } = require("./utils/session");
 const { createTables } = require("./database/createtbl");
 const { seedDatabase } = require("./database/seedDb");
-const { saveBotToDatabase } = require("./database/svbot");
+const { saveBotToDatabase } = require("./database/svbot");  
 const { sendWhatsAppMessage } = require("./database/genewmember");
 const asciiLogo = fs.readFileSync("./media/bot/logo.txt", "utf8");
 const {
@@ -24,10 +29,19 @@ const {
   clearAllChats,
   isGroupAdmin,
   loadSleepModeStatus,
-  setSleepMode,
 } = require("./utils/permission");
-global.isSleepModeActive = loadSleepModeStatus();
 const app = express();
+
+let isSleepModeActive = loadSleepModeStatus();
+
+function setSleepMode(isActive) {
+  isSleepModeActive = isActive;
+  saveSleepModeStatus(isActive);
+
+  if (isActive) {
+    cleanStoreAndMessages();
+  }
+}
 
 const sessions = global.sessions || {};
 let botInti;
@@ -44,6 +58,7 @@ if (!fs.existsSync(storeDir)) {
 const store = makeInMemoryStore({
   logger: P().child({ level: "silent", stream: "store" }),
 });
+
 const storeFile = path.join(storeDir, "store.json");
 store.readFromFile(storeFile);
 setInterval(() => {
@@ -82,25 +97,6 @@ async function sendMessageSafely(sock, jid, message, retries = 3) {
         console.error("Gagal mengirim pesan setelah 3 percobaan.");
       }
     }
-  }
-}
-
-async function startBotInti() {
-  console.log("Memulai bot inti...");
-  await delay(5000);
-  const sessionPath = "./sessions/whatsapp-session-bot-inti";
-  botInti = await initiateBot(sessionPath, "bot-inti");
-  console.log("Bot inti berjalan dengan session tetap");
-
-  const ownerNumber = process.env.OWNER_PHONE;
-  if (botInti && botInti.user && botInti.user.id) {
-    await sendMessageSafely(botInti, ownerNumber + "@s.whatsapp.net", {
-      text: "Bot inti siap digunakan! 🤖✅",
-    });
-  } else {
-    console.log(
-      "Tidak dapat mengirim pesan: botInti atau botInti.user tidak tersedia"
-    );
   }
 }
 
@@ -166,7 +162,7 @@ async function initiateBot(sessionPath, userId = "bot-inti", lifetime = 30) {
     logger: P({ level: "silent" }),
     printQRInTerminal: true,
     browser: ["Ubuntu", "Chrome", "20.0.04"],
-    connectTimeoutMs: 60_000,
+    connectTimeoutMs: 120_000,
     defaultQueryTimeoutMs: 0,
     keepAliveIntervalMs: 10000,
     emitOwnEvents: false,
@@ -246,7 +242,7 @@ async function initiateBot(sessionPath, userId = "bot-inti", lifetime = 30) {
     const message = msg.messages[0];
     const from = message.key.remoteJid;
     const sender = message.key.participant || from;
-
+    // const isGroup = from.endsWith("@g.us");
     // Cek apakah pesan belum terbaca dan bukan dari bot itu sendiri
     if (!message.key.fromMe && message.message && !message.key.read) {
       try {
@@ -262,81 +258,64 @@ async function initiateBot(sessionPath, userId = "bot-inti", lifetime = 30) {
     }
 
     const isSleeping = isBotSleeping();
+
     if (isSleeping && !isOwner) {
-      if (
-        message.key &&
-        !message.key.fromMe &&
-        message.key.remoteJid !== "status@broadcast"
-      ) {
-        const senderId = message.key.remoteJid;
+      console.log("bot tidur");
+      const senderId = message.key.remoteJid;
 
-        if (!global.notifiedSenders) {
-          global.notifiedSenders = new Set();
-        }
+      if (!global.notifiedSenders) {
+        global.notifiedSenders = new Set();
+      }
 
-        if (!global.notifiedSenders.has(senderId)) {
-          const clientName = message.pushName || "Pengguna";
-          const ownerNumber = process.env.OWNER_PHONE;
-          const broadcastMessage = `*[ PEMBERITAHUAN PENTING ]*\n\nHalo ${clientName},\n\nMohon maaf atas ketidaknyamanannya. Saat ini, layanan bot sedang dalam mode istirahat atau tidak aktif untuk sementara waktu.\n\n*Status:* Tidak Aktif ❌\n*Estimasi Aktif Kembali:* Belum Ditentukan\n\nUntuk informasi lebih lanjut atau permintaan pengaktifan kembali, silakan hubungi admin kami:\n\n👤 *@${ownerNumber}*\n\nTerima kasih atas pengertian dan kesabaran Anda. Kami akan segera kembali untuk melayani Anda!`;
+      if (!global.notifiedSenders.has(senderId)) {
+        const clientName = message.pushName || "Pengguna";
+        const ownerNumber = process.env.OWNER_PHONE;
+        const broadcastMessage = `*[ PEMBERITAHUAN PENTING ]*\n\nHalo ${clientName},\n\nMohon maaf atas ketidaknyamanannya. Saat ini, layanan bot sedang dalam mode istirahat atau tidak aktif untuk sementara waktu.\n\n*Status:* Tidak Aktif ❌\n*Estimasi Aktif Kembali:* Belum Ditentukan\n\nUntuk informasi lebih lanjut atau permintaan pengaktifan kembali, silakan hubungi admin kami:\n\n👤 *@${ownerNumber}*\n\nTerima kasih atas pengertian dan kesabaran Anda. Kami akan segera kembali untuk melayani Anda!`;
 
-          try {
-            await sock.sendMessage(senderId, {
-              image: {
-                url: path.join(__dirname, "../media/bot/sleepmode.jpeg"),
-              },
-              caption: broadcastMessage,
-              mentions: [`${ownerNumber}@s.whatsapp.net`],
-            });
-            global.notifiedSenders.add(senderId);
-          } catch (error) {
-            console.error("Error saat mengirim pesan sleep mode:", error);
-          }
+        try {
+          await sock.sendMessage(senderId, {
+            image: {
+              url: path.join(__dirname, "../media/bot/sleepmode.jpeg"),
+            },
+            caption: broadcastMessage,
+            mentions: [`${ownerNumber}@s.whatsapp.net`],
+            quoted: message,
+          });
+          global.notifiedSenders.add(senderId);
+        } catch (error) {
+          console.error("Error saat mengirim pesan sleep mode:", error);
         }
       }
-    } else {
-      if (!message.message || message.key.fromMe) return;
+      return;
+    }
 
-      // Extract the text message
-      let text = "";
-      if (message.message?.conversation) {
-        text = message.message.conversation;
-      } else if (message.message?.imageMessage?.caption) {
-        text = message.message.imageMessage.caption;
-      } else if (message.message?.videoMessage?.caption) {
-        text = message.message.videoMessage.caption;
-      } else if (message.message?.extendedTextMessage?.text) {
-        text = message.message.extendedTextMessage.text;
-      } else if (message.message?.documentMessage?.caption) {
-        text = message.message.documentMessage.caption;
-      } else if (message.message?.audioMessage) {
-        text = "Pesan suara diterima.";
-      } else if (message.message?.stickerMessage) {
-        text = "Pesan stiker diterima.";
-      } else {
-        text = "Format pesan tidak dikenali.";
-      }
+    // console.log("bot tidak tidur");
+    if (!message.message || message.key.fromMe) return;
 
-      // Validate if text is a string and not empty
-      if (typeof text === "string" && text.trim().length > 0) {
-        const commandName = text.split(" ")[0].toLowerCase(); // Extract command name
+    // Extract the text message
+    const text = message?.message?.conversation || message?.message?.extendedTextMessage?.text || message?.message?.imageMessage?.caption || message?.message?.videoMessage?.caption || message?.message?.documentMessage?.caption || (message?.message?.audioMessage ? "Pesan suara diterima." : "") || (message?.message?.stickerMessage ? "Pesan stiker diterima." : "");
 
-        if (sock?.commands?.has(commandName)) {
-          const command = sock.commands.get(commandName);
-          try {
-            await command.execute(sock, message); // Execute the command
-          } catch (error) {
-            console.error(`[ERROR] ${error}`);
-          }
+    // Validate if text is a string and not empty
+    if (typeof text === "string" && text.trim().length > 0) {
+      const commandName = text.split(" ")[0].toLowerCase(); // Extract command name
+
+      if (sock?.commands?.has(commandName)) {
+        const command = sock.commands.get(commandName);
+        try {
+          await command.execute(sock, message); // Execute the command
+        } catch (error) {
+          console.error(`[ERROR] ${error}`);
         }
       }
+    }
 
-      if (checkSpam(sender, message)) {
-        console.log(`Spam dari ${sender}`);
-        await sock.sendMessage(from, {
-          text: `⚠️ *Warning*: Anda memberikan pesan spam ke bot ini. Tunggu beberapa saat.`,
-        });
-        return;
-      }
+    if (checkSpam(sender, message)) {
+      console.log(`Spam dari ${sender}`);
+      await sock.sendMessage(from, {
+        quoted: message,
+        text: `⚠️ *Warning*: Anda memberikan pesan spam ke bot ini. Tunggu beberapa saat.`,
+      });
+      return;
     }
   });
 
@@ -402,6 +381,19 @@ async function main() {
   const sessionPath = "./sessions/whatsapp-session-bot-inti";
   const userId = "bot-inti";
   await retryOperation(3, () => initiateBot(sessionPath, userId), 5000);
+}
+
+// Tambahkan fungsi untuk membersihkan store dan pesan
+function cleanStoreAndMessages() {
+  try {
+    fs.writeFileSync(
+      storeFile,
+      JSON.stringify({ chats: [], messages: {} }, null, 2)
+    );
+    console.log("Store dan pesan berhasil dibersihkan.");
+  } catch (error) {
+    console.error("Error saat membersihkan store dan pesan:", error);
+  }
 }
 
 main().catch((error) => console.error("Error in main function:", error));

@@ -1,10 +1,12 @@
 const moment = require("moment-timezone");
-let isSleepModeActive = false;
 const fs = require("fs");
 const path = require("path");
 
+let isSleepModeActive = loadSleepModeStatus();
+
 async function isGroupAdmin(sock, groupId, userId) {
   try {
+    console.log(groupId);
     const groupMetadata = await sock.groupMetadata(groupId);
     const admins = groupMetadata.participants
       .filter((p) => p.admin !== null)
@@ -16,26 +18,16 @@ async function isGroupAdmin(sock, groupId, userId) {
   }
 }
 
-// utils/permission.js
-
 /**
- * Fungsi untuk mengecek apakah bot sedang tidur dan menghapus pesan jika iya
+ * Cek apakah bot sedang dalam mode tidur berdasarkan status sleep mode dan waktu
  */
 function isBotSleeping() {
-  if (isSleepModeActive) {
-    return true;
-  }
-
   const now = moment().tz("Asia/Jakarta");
   const hour = now.hour();
 
-  if (hour >= 23 && hour < 3) {
-    return true;
-  }
-
-  return false;
+  // Bot akan tidur jika sleep mode aktif ATAU jam antara 22:00 - 24:00
+  return isSleepModeActive || (hour >= 22 && hour < 3);
 }
-
 function saveSleepModeStatus(isActive) {
   const dir = path.join(__dirname, "../json");
   const filePath = path.join(dir, "activedbt.json");
@@ -48,13 +40,6 @@ function saveSleepModeStatus(isActive) {
   } catch (error) {
     console.error("Error saving sleep mode status:", error);
   }
-}
-
-function setSleepMode(isActive) {
-  isSleepModeActive = isActive;
-  // Simpan status sleep mode ke database atau file konfigurasi
-  // Anda mungkin perlu membuat fungsi baru untuk ini
-  saveSleepModeStatus(isActive);
 }
 
 async function clearAllChats(sock) {
@@ -84,34 +69,25 @@ async function clearAllChats(sock) {
 }
 
 function loadSleepModeStatus() {
+  const filePath = path.join(__dirname, "../json/activedbt.json");
   try {
-    const filePath = path.join(__dirname, "../json/activedbt.json");
-    if (!fs.existsSync(filePath)) {
-      console.log("File sleep mode status tidak ditemukan. Membuat file baru.");
-      saveSleepModeStatus(false);
-      return false;
+    if (fs.existsSync(filePath)) {
+      const data = fs.readFileSync(filePath, "utf8");
+      const status = JSON.parse(data);
+      return status.isActive;
     }
-    const data = fs.readFileSync(filePath, "utf8");
-    if (!data.trim()) {
-      console.log("File sleep mode status kosong. Mengatur ke default false.");
-      saveSleepModeStatus(false);
-      return false;
-    }
-    const status = JSON.parse(data);
-    return status.isActive;
   } catch (error) {
     console.error("Error loading sleep mode status:", error);
-    console.log("Mengatur sleep mode status ke default false.");
-    saveSleepModeStatus(false);
-    return false;
   }
+  return false; // Default jika file tidak ada atau terjadi error
 }
+
 
 async function handleOwnerMessage(sock, message) {
   const from = message.key.remoteJid;
   const text =
-    message.message.conversation ||
-    message.message.extendedTextMessage?.text ||
+    message?.message?.conversation ||
+    message?.message?.extendedTextMessage?.text ||
     "";
 
   if (text.toLowerCase() === ".wakeup") {
@@ -131,7 +107,7 @@ module.exports = {
   isGroupAdmin,
   isBotSleeping,
   clearAllChats,
+  saveSleepModeStatus,
   loadSleepModeStatus,
-  setSleepMode,
-  handleOwnerMessage
+  handleOwnerMessage,
 };

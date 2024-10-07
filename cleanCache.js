@@ -13,13 +13,17 @@ function cleanFolder(folderPath) {
 
     files.forEach(file => {
       const filePath = path.join(folderPath, file);
-      fs.unlink(filePath, err => {
-        if (err) {
-          console.error(`Error menghapus file ${filePath}:`, err);
-        } else {
-          console.log(`File ${filePath} berhasil dihapus`);
-        }
-      });
+      if (filePath) { // Tambahkan pengecekan ini
+        fs.unlink(filePath, err => {
+          if (err) {
+            console.error(`Error menghapus file ${filePath}:`, err);
+          } else {
+            console.log(`File ${filePath} berhasil dihapus`);
+          }
+        });
+      } else {
+        console.error(`File path tidak valid untuk file: ${file}`);
+      }
     });
   });
 }

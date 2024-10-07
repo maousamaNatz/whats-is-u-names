@@ -15,6 +15,7 @@ module.exports = {
     if (!content) {
       await sock.sendMessage(from, {
         text: "Silakan masukkan teks yang ingin diubah menjadi suara.",
+        quoted: message
       });
       return;
     }
@@ -28,6 +29,7 @@ module.exports = {
         audio: { url: tempFilePath },
         mimetype: "audio/mp3",
         ptt: true,
+        quoted: message
       });
 
       fs.unlinkSync(tempFilePath);

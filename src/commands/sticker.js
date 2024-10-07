@@ -1,5 +1,4 @@
 const { writeExifImg, writeExifVid } = require('../libs/exif');
-const fileType = require('file-type');
 const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
 
 module.exports = {
@@ -16,7 +15,7 @@ module.exports = {
 
     // Jika tidak ada media, kirim pesan error
     if (!mediaMessage) {
-      await sock.sendMessage(from, { text: 'Silakan kirim gambar atau video untuk dijadikan stiker.' });
+      await sock.sendMessage(from, { text: 'Silakan kirim gambar atau video untuk dijadikan stiker.', quoted: message });
       return;
     }
 
@@ -32,8 +31,11 @@ module.exports = {
         mediaBuffer = Buffer.concat([mediaBuffer, chunk]);
       }
 
+      // Impor file-type secara dinamis
+      const fileType = await import('file-type');
+
       // Cek tipe file
-      const mimeType = await fileType.fromBuffer(mediaBuffer);
+      const mimeType = await fileType.fileTypeFromBuffer(mediaBuffer);
       console.log('MIME type:', mimeType);
 
       // Periksa apakah media adalah gambar atau video dengan format yang valid
@@ -43,7 +45,7 @@ module.exports = {
         mimeType.mime !== "image/png" &&
         mimeType.mime !== "video/mp4"
       ) {
-        await sock.sendMessage(from, { text: "Format media tidak didukung. Silakan kirim GIF, JPEG, PNG, atau MP4." });
+        await sock.sendMessage(from, { text: "Format media tidak didukung. Silakan kirim GIF, JPEG, PNG, atau MP4.", quoted: message });
         return;
       }
 

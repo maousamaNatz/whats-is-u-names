@@ -17,59 +17,64 @@ Halo! Saya adalah bot yang siap membantu Anda dalam berbagai kebutuhan sehari-ha
 ──────────────────
 *⚙️ General Commands:*
 ──────────────────
+
 1.) *.cuaca* : Cek informasi cuaca terkini
 2.) *.calculator* : Gunakan kalkulator sederhana
 3.) *.brandly* : Perpendek URL dengan mudah
-4.) *.stt* : Ubah suara menjadi teks (Speech to Text)
-5.) *.tts* : Ubah teks menjadi suara (Text to Speech)
-6.) *.download* : Download berbagai konten dari internet
-7.) *.search* : Pencarian cepat berbagai hal
+4.) *.download* : Download berbagai konten dari internet
+5.) *.search* : Pencarian cepat berbagai hal
+6.) *.shortlink* : Membuat shortlink dari url yang anda inginkan
+7.) *.ss* : Mengambil gambar tampilan website _*NGEBUG*_
+8.) *.createGroup* : Membuat grup baru dengan anggota yang disebutkan
+9.) *.sticker* : Membuat stiker dari gambar atau video yang dikirim
+
 ──────────────────
-*🔄 Conversion Tools:*
+*🔄 Conversion Tools:* _(ONGOING)_
 ──────────────────
-1.) *Text to Voice* : Konversi teks menjadi audio
-2.) *PDF to Word* : Ubah file PDF menjadi dokumen Word
+
+1.) *.text-to-voice* : Konversi teks menjadi audio
+2.) *.pdf-to-word* : Ubah file PDF menjadi dokumen Word
+3.) *.pdf-to-image* : Ubah file PDF menjadi gambar
+4.) *.image-to-pdf* : Ubah file gambar menjadi PDF
+5.) *.video-to-gif* : Ubah file video menjadi gif
+6.) *.gif-to-video* : Ubah file gif menjadi video
+7.) *.video-to-audio* : Ubah file video menjadi audio
+8.) *.audio-to-video* : Ubah file audio menjadi video
 
 ──────────────────
 *🤖 AI Commands:*
 ──────────────────
-1.) *Lepton* : Analisis dan natural language processing
-2.) *GPT-4* : Model AI terbaru untuk segala kebutuhan
-3.) *Claude 3.5 Sonet* : Alternatif AI berbasis Claude
-4.) *GPT-3.5* : Versi GPT sebelumnya dengan kecerdasan tinggi
-5.) *GPT-3.5 Turbo* : Optimalisasi GPT-3.5 dengan kinerja lebih cepat
-6.) *GPT-4O* : Versi lebih ringan dari GPT-4
-7.) *Blackbox* : AI khusus untuk membantu kode otomatis
-8.) *DALL·E* : Buat gambar dari teks dengan AI kreatif
-9.) *Gemini 1.5 Flash* : Model AI untuk pemrosesan cepat
+
+1.) *.lepton* : Analisis dan natural language processing _*ONGOING*_
+2.) *.gpt-4* : Model AI terbaru untuk segala kebutuhan
+3.) *.claude* : Alternatif AI berbasis Claude 3.5 Sonet 
+4.) *.gpt-35* : Versi GPT sebelumnya dengan kecerdasan tinggi
+5.) *.gpt-35-turbo* : Optimalisasi GPT-3.5 dengan kinerja lebih cepat
+6.) *.gpt-4o* : Versi lebih ringan dari GPT-4
+7.) *.blackbox* : AI khusus untuk membantu kode otomatis
+8.) *.dalle* : Buat gambar dari teks dengan AI kreatif
+9.) *.gemini* : Model AI untuk pemrosesan cepat
 
 ──────────────────
 *🎮 Game Commands:*
 ──────────────────
-⚠️ *Coming Soon!* Stay tuned for awesome games!
+
+1.) *.cek-khodam* : coba kodam mu kawan
+2.) *.tebak-kata* : bermain tebak kata
+3.) *.tictactoe* : bermain tictactoe
 
 ──────────────────
 *👥 Group Commands:*
 ──────────────────
 1.) *.add* : Tambahkan member ke grup (Hanya admin)
 2.) *.promote* : Mempromosikan member ke admin (Hanya admin)
-3.) *.adduser* : Tambahkan pengguna baru dengan role dan lifetime
-4.) *.mute* : Matikan notifikasi grup (Hanya admin)
-5.) *.unmute* : Aktifkan kembali notifikasi grup (Hanya admin) *ONGOING*
-6.) *.clearall* : Hapus semua pesan di grup (Hanya admin) *ONGOING*
-7.) *.kick* : Mengeluarkan member dari grup (Hanya admin)
-8.) *.silent* : Membuat group agar hanya admin yang bisa mengirim pesan
-
-⚠️ *Coming Soon!* Fitur menarik untuk pengelolaan grup.
-
-__________________
-
-OWNER COMMAND 
-__________________
-
-1.) *.broadcast* : Kirim pesan ke semua grup (Hanya owner)
-2.) *.sleep* : Aktifkan mode tidur bot (Hanya owner)
-3.) *.wakeup* : Nonaktifkan mode tidur bot (Hanya owner)
+3.) *.demote* : Menurunkan status anggota dari admin (Hanya admin)
+4.) *.adduser* : Tambahkan pengguna baru dengan role dan lifetime
+5.) *.mute* : Matikan notifikasi grup (Hanya admin)
+6.) *.unmute* : Aktifkan kembali notifikasi grup (Hanya admin)
+7.) *.clearall* : Hapus semua pesan di grup (Hanya admin) *ONGOING*
+8.) *.kick* : Mengeluarkan member dari grup (Hanya admin)
+9.) *.silent* : Membuat group agar hanya admin yang bisa mengirim pesan (hanya admin)
 
 ──────────────────
 ❓ *FAQ:*
@@ -101,6 +106,7 @@ Bot aktif setiap hari dari pukul 03:00 WIB hingga 22:00 WIB.
       await sock.sendMessage(from, {
         image: imageBuffer,
         caption: helpMessage,
+        quoted: message,  
       });
     } catch (error) {
       console.error("Error membaca file gambar:", error);

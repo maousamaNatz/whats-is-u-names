@@ -6,10 +6,10 @@ module.exports = {
   async execute(sock, message) {
     const from = message.key.remoteJid;
 
-    if (!message.isGroup) {
-      await sock.sendMessage(from, {
-        text: "Perintah ini hanya dapat digunakan dalam grup.",
-      });
+    // Cek apakah dari grup
+    const isGroup = from.endsWith("@g.us");
+    if (!isGroup) {
+      await sock.sendMessage(from, { text: "Perintah ini hanya dapat digunakan dalam grup.", quoted: message });
       return;
     }
 
@@ -17,9 +17,7 @@ module.exports = {
     const isAdmin = await isGroupAdmin(sock, from, sender);
 
     if (!isAdmin) {
-      await sock.sendMessage(from, {
-        text: "Maaf, hanya admin grup yang dapat menggunakan perintah ini.",
-      });
+      await sock.sendMessage(from, { text: "Maaf, hanya admin grup yang dapat menggunakan perintah ini.", quoted: message });
       return;
     }
 
@@ -27,13 +25,19 @@ module.exports = {
     const participants = groupMetadata.participants;
 
     let mentions = [];
-    let text = "Menandai semua anggota grup:\n\n";
+    let text = "";
+    let count = 0;
 
     for (let participant of participants) {
-      mentions.push(participant.id);
-      text += `@${participant.id.split("@")[0]}\n`;
+      const participantId = participant.id || participant.jid;
+      mentions.push(participantId);
+      text += `@${participantId.split("@")[0]}`;
+      count++;
+      if (count < participants.length) {
+        text += " ";
+      }
     }
 
-    await sock.sendMessage(from, { text: text, mentions: mentions });
+    await sock.sendMessage(from, {mentions: mentions , text: text, quoted: message});
   },
 };
