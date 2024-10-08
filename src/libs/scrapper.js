@@ -328,6 +328,52 @@ function WebpToMp4(filePath) {
    });
 }
 
+function webpTojpg(filePath) {
+   return new Promise((resolve, reject) => {
+      const form = new FormData();
+      form.append("new-image-url", "");
+      form.append("new-image", fs.createReadStream(filePath));
+
+      axios({
+         method: "POST",
+         url: "https://ezgif.com/webp-to-jpg",
+         data: form,
+         headers: {
+            "Content-Type": "multipart/form-data; boundary=" + form._boundary,
+         },
+      })
+         .then(({ data: initialResponse }) => {
+            const form2 = new FormData();
+            const $ = cheerio.load(initialResponse);
+            const fileValue = $("input[name='file']").attr("value");
+
+            form2.append("file", fileValue);
+            form2.append("convert", "Convert WebP to JPG!");
+
+            axios({
+               method: "POST",
+               url: "https://ezgif.com/webp-to-jpg/" + fileValue,
+               data: form2,
+               headers: {
+                  "Content-Type": "multipart/form-data; boundary=" + form2._boundary,
+               },
+            })
+               .then(({ data: conversionResponse }) => {
+                  const $ = cheerio.load(conversionResponse);
+                  const mp4Url = "https:" + $("div#output > p.outfile > video > source").attr("src");
+
+                  resolve({
+                     status: true,
+                     message: "Created By MRHRTZ",
+                     result: mp4Url,
+                  });
+               })
+               .catch(reject);
+         })
+         .catch(reject);
+   });
+}
+
 module.exports = {
    searchAnimeMAL,
    searchMangaMAL,
@@ -339,4 +385,5 @@ module.exports = {
    styletext,
    ytmp3,
    WebpToMp4,
+   webpTojpg,
 };

@@ -144,16 +144,32 @@ app.get("/stop-session", (req, res) => {
 async function initiateBot(sessionPath, userId = "bot-inti", lifetime = 30) {
   console.log(asciiLogo);
 
-  db.query("SELECT 1", (err) => {
-    if (err) {
-      console.error("Error menghubungkan ke database:", err);
-      process.exit(1);
-    } else {
-      console.log("Terhubung ke database MySQL");
-      createTables();
-      seedDatabase();
+  // Tambahkan fungsi untuk mencoba koneksi database berulang kali
+  const tryConnectDatabase = async (maxRetries = 5, retryInterval = 5000) => {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await new Promise((resolve, reject) => {
+          db.query("SELECT 1", (err) => {
+            if (err) reject(err);
+            else resolve();
+          });
+        });
+        console.log("Terhubung ke database MySQL");
+        createTables();
+        seedDatabase();
+        return;
+      } catch (err) {
+        console.error(`Percobaan ${attempt}: Gagal terhubung ke database:`, err);
+        if (attempt === maxRetries) {
+          console.error("Gagal terhubung ke database setelah beberapa percobaan. Melanjutkan tanpa database.");
+          return;
+        }
+        await new Promise(resolve => setTimeout(resolve, retryInterval));
+      }
     }
-  });
+  };
+
+  await tryConnectDatabase();
 
   const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
 

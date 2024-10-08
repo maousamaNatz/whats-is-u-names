@@ -2,120 +2,129 @@ Changelog WhatsApp Bot
 
 [Versi 0.0.3] - 2024-09-18
 
-Fitur Utama:
+A. Fitur Utama:
+
 1. Implementasi Bot WhatsApp:
-   - Menggunakan library @whiskeysockets/baileys versi terbaru untuk koneksi WhatsApp
-   - Sistem multi-sesi yang memungkinkan bot inti dan bot pengguna berjalan bersamaan
-   - Penanganan koneksi otomatis dengan fitur reconnect saat terputus
-   - Implementasi QR code generation untuk autentikasi sesi baru
-   - Penggunaan useMultiFileAuthState untuk manajemen kredensial yang lebih aman
-   - Penambahan fitur analisis sentimen untuk pesan masuk, memungkinkan bot untuk memberikan respons yang lebih sesuai.
-   - Integrasi dengan layanan cuaca untuk memberikan informasi cuaca terkini berdasarkan lokasi pengguna.
-   - Penambahan fitur pengingat otomatis yang dapat diatur oleh pengguna.
-   - Optimisasi algoritma untuk pemrosesan pesan yang lebih cepat.
-   - Pengurangan waktu respons bot dengan caching yang lebih efisien.
-   - Implementasi sistem antrian untuk penanganan pesan yang lebih baik.
+   - Menggunakan library @whiskeysockets/baileys versi terbaru
+   - Sistem multi-sesi (bot inti dan bot pengguna)
+   - Penanganan koneksi otomatis dengan fitur reconnect
+   - QR code generation untuk autentikasi sesi baru
+   - useMultiFileAuthState untuk manajemen kredensial
+   - Analisis sentimen untuk pesan masuk
+   - Integrasi layanan cuaca
+   - Fitur pengingat otomatis
+   - Optimisasi algoritma pemrosesan pesan
+   - Caching untuk respons lebih cepat
+   - Sistem antrian penanganan pesan
 
 2. Manajemen Perintah:
-   - Sistem pemuatan perintah dinamis dari folder commands
-   - Penambahan berbagai perintah baru:
-     * help: Menampilkan daftar perintah yang tersedia
-     * gpt4: Integrasi dengan model GPT-4 untuk pemrosesan bahasa alami
-     * broadcast: Mengirim pesan ke semua grup
-     * changelog: Menampilkan perubahan terbaru pada bot
-   - Implementasi prefix konfigurabel untuk perintah (.prefix)
+   - Pemuatan perintah dinamis dari folder commands
+   - Perintah baru: help, gpt4, broadcast, changelog
+   - Prefix konfigurabel (.prefix)
 
 3. Integrasi Database:
-   - Koneksi ke MySQL untuk penyimpanan data pengguna dan sesi
-   - Fungsi createTables untuk inisialisasi struktur database
-   - Implementasi seedDatabase untuk populasi data awal
-   - Fungsi saveBotToDatabase untuk menyimpan informasi bot ke database
+   - Koneksi MySQL untuk data pengguna dan sesi
+   - Fungsi createTables, seedDatabase, saveBotToDatabase
 
 4. Fitur AI:
-   - Integrasi dengan berbagai model AI:
-     * GPT-4 untuk pemrosesan bahasa alami tingkat lanjut
-     * GPT-3.5 Turbo untuk respons cepat
-     * Gemini 1.5 Flash untuk pemrosesan ultra-cepat
-   - Implementasi sistem fallback: jika model utama gagal, bot akan mencoba model alternatif
-   - Penggunaan axios untuk request API ke layanan AI
+   - Integrasi model: GPT-4, GPT-3.5 Turbo, Gemini 1.5 Flash
+   - Sistem fallback antar model
+   - Penggunaan axios untuk API requests
 
 5. Fitur Grup:
-   - Broadcast pesan ke semua grup dengan satu perintah
-   - Pengecekan status admin grup menggunakan fungsi isGroupAdmin
-   - Fitur selamat datang dan perpisahan dengan gambar dinamis menggunakan canvas
-   - Implementasi fitur mute dan unmute grup
+   - Broadcast pesan ke semua grup
+   - Pengecekan status admin grup
+   - Selamat datang dan perpisahan dengan gambar dinamis
+   - Fitur mute dan unmute grup
 
 6. Manajemen Sesi:
-   - Pembuatan dan pengelolaan sesi WhatsApp menggunakan useMultiFileAuthState
-   - Penyimpanan kredensial sesi secara aman dengan enkripsi
-   - Implementasi sistem multi-sesi untuk mendukung bot inti dan bot pengguna
+   - useMultiFileAuthState untuk pengelolaan sesi
+   - Enkripsi penyimpanan kredensial
+   - Sistem multi-sesi
 
-7. Utilitas:
-   - Fungsi delay untuk menangani operasi asynchronous
-   - Pembersihan cache otomatis menggunakan PM2 hooks
-   - Sistem logging yang ditingkatkan dengan format JSON dan timestamp
-   - Implementasi fungsi formatNumber untuk memformat nomor telepon
+7. Perintah Unduh Media:
+   - Implementasi perintah 'dl', 'download', 'unduh', 'downloads'
+   - Dukungan unduhan video, audio, dan gambar
+   - Penanganan error saat unduhan
 
-8. Keamanan:
-   - Implementasi sleep mode untuk menghemat sumber daya dan meningkatkan privasi
-   - Pengecekan otentikasi untuk perintah tertentu menggunakan isOwner
-   - Penggunaan file .env untuk menyimpan konfigurasi sensitif
-   - Implementasi ratelimiting untuk mencegah spam
-   - Peningkatan enkripsi data untuk komunikasi yang lebih aman, menggunakan protokol terbaru.
-   - Implementasi otentikasi dua faktor untuk akses admin, meningkatkan keamanan akses.
-   - Pengecekan dan pembaruan rutin terhadap dependensi untuk menghindari kerentanan keamanan.
+8. Integrasi Layanan Unduhan:
+   - Dukungan: YouTube, Spotify, Instagram, TikTok, Twitter
+   - Penggunaan library khusus per platform
 
-9. Antarmuka Web:
-   - Server Express untuk manajemen sesi dan bot
-   - Endpoint /create-session untuk membuat sesi baru
-   - Endpoint /stop-session untuk menghentikan sesi yang berjalan
-   - Implementasi middleware untuk pengecekan userId
+9. Utilitas:
+   - Fungsi delay untuk operasi asynchronous
+   - Pembersihan cache otomatis (PM2 hooks)
+   - Sistem logging JSON dengan timestamp
+   - Fungsi formatNumber
 
-Perbaikan dan Optimisasi:
-- Perbaikan bug pada penanganan pesan grup
-- Optimisasi penggunaan memori dengan pembatasan maksimum 400MB
-- Peningkatan keandalan saat mengirim pesan dengan sistem retry (3 kali percobaan)
-- Perbaikan penanganan error pada fungsi handleGroupUpdate
-- Perbaikan bug pada fitur pengiriman gambar yang menyebabkan crash pada kondisi tertentu.
-- Optimisasi penggunaan memori dengan pembatasan maksimum 350MB, mengurangi kemungkinan aplikasi berhenti tiba-tiba.
-- Peningkatan keandalan saat mengirim pesan dengan sistem retry (5 kali percobaan), memastikan pesan terkirim meskipun ada gangguan jaringan.
+10. Keamanan:
+    - Sleep mode untuk hemat sumber daya
+    - Pengecekan otentikasi dengan isOwner
+    - Penggunaan file .env untuk konfigurasi sensitif
+    - Ratelimiting untuk mencegah spam
+    - Peningkatan enkripsi data komunikasi
+    - Otentikasi dua faktor untuk akses admin
+    - Pengecekan rutin dependensi
 
+11. Antarmuka Web:
+    - Server Express untuk manajemen sesi dan bot
+    - Endpoint: /create-session, /stop-session
+    - Middleware pengecekan userId
 
-Konfigurasi dan Pengaturan:
-- Penggunaan file .env untuk konfigurasi sensitif seperti API_KEY dan URL_AI
-- Konfigurasi PM2 untuk manajemen proses dan auto-restart
-- Pengaturan waktu aktif bot (03:00 WIB - 22:00 WIB) menggunakan moment-timezone
-- Konfigurasi stiker yang dapat disesuaikan (nama pack, author, kategori)
+B. Perbaikan dan Optimisasi:
+   - Perbaikan bug penanganan pesan grup
+   - Optimisasi penggunaan memori (maks. 350MB)
+   - Sistem retry pengiriman pesan (5 kali percobaan)
+   - Perbaikan penanganan error handleGroupUpdate
+   - Perbaikan bug pengiriman gambar
 
-Dokumentasi:
-- Penambahan pesan bantuan yang lebih informatif di fungsi help
-- Pembaruan README dengan instruksi instalasi, penggunaan, dan troubleshooting
-- Penambahan komentar pada fungsi-fungsi utama untuk memudahkan pemahaman kode
-- Pembaruan dokumentasi dengan panduan penggunaan fitur baru, termasuk contoh penggunaan dan FAQ.
-- Penambahan FAQ untuk menjawab pertanyaan umum pengguna, membantu pengguna baru memahami cara kerja bot.
-- Penambahan komentar pada kode untuk memudahkan pengembang lain dalam memahami alur program.
+C. Konfigurasi dan Pengaturan:
+   - File .env untuk konfigurasi sensitif
+   - Konfigurasi PM2 (manajemen proses, auto-restart)
+   - Pengaturan waktu aktif bot (03:00-22:00 WIB)
+   - Konfigurasi stiker yang dapat disesuaikan
 
+D. Dokumentasi:
+   - Pesan bantuan informatif di fungsi help
+   - Pembaruan README (instalasi, penggunaan, troubleshooting)
+   - Penambahan komentar pada fungsi utama
+   - Panduan penggunaan fitur baru dan FAQ
 
-Dependensi:
-- Penambahan axios untuk request HTTP
-- Penggunaan moment-timezone untuk penanganan zona waktu
-- Integrasi canvas untuk pembuatan gambar dinamis
-- Penggunaan pino untuk logging yang lebih baik
+E. Dependensi:
+   - axios untuk request HTTP
+   - moment-timezone untuk penanganan zona waktu
+   - canvas untuk pembuatan gambar dinamis
+   - pino untuk logging
 
-Perubahan Struktur Proyek:
-- Reorganisasi file dan folder
-- Pemisahan logika bisnis ke dalam modul-modul terpisah
+F. Perubahan Struktur Proyek:
+   - Reorganisasi file dan folder
+   - Pemisahan logika bisnis ke modul terpisah
 
-Fitur Eksperimental:
-- Implementasi awal untuk fitur game (akan dikembangkan lebih lanjut)
-- Persiapan untuk integrasi fitur grup tambahan seperti anti-spam dan welcome message kustom
+G. Fitur Eksperimental:
+   - Implementasi awal fitur game
+   - Persiapan fitur grup (anti-spam, welcome message kustom)
 
-Catatan Pengembang:
-- Peningkatan penanganan error dengan try-catch yang lebih komprehensif
-- Implementasi praktik keamanan yang lebih baik, termasuk sanitasi input
-- Persiapan untuk skalabilitas di masa depan dengan arsitektur modular
-- Peningkatan penanganan error dengan logging yang lebih detail, memudahkan proses debugging.
-- Persiapan untuk integrasi dengan layanan pihak ketiga, membuka peluang untuk fitur tambahan di masa depan.
-- Implementasi praktik keamanan yang lebih baik, termasuk sanitasi input dan validasi data.
+H. Catatan Pengembang:
+   - Peningkatan penanganan error (try-catch komprehensif)
+   - Implementasi praktik keamanan (sanitasi input, validasi data)
+   - Persiapan skalabilitas (arsitektur modular)
+   - Logging detail untuk debugging
+   - Persiapan integrasi layanan pihak ketiga
 
-Versi ini mencakup berbagai peningkatan signifikan dalam fungsionalitas, keandalan, dan keamanan bot. Pengembangan akan terus berlanjut dengan fokus pada penambahan fitur baru, optimisasi performa, dan peningkatan pengalaman pengguna.
+I. Perbaikan Bug:
+   - Perbaikan crash pada penanganan pesan grup
+   - Optimisasi memori saat unduh file besar
+
+J. Fitur dalam Pengembangan:
+   1. Integrasi penyimpanan awan untuk backup media
+   2. Teknik paralel download untuk kecepatan unduh
+   3. Sistem pembatasan ukuran file
+
+K. Rencana Fitur Mendatang:
+   1. Dukungan platform media sosial tambahan
+   2. Konversi format media
+   3. Sistem tag dan pengorganisasian media
+   4. Integrasi sistem rekomendasi AI
+   5. Pencarian media berdasarkan metadata
+
+Versi ini mencakup peningkatan signifikan dalam fungsionalitas, keandalan, dan keamanan bot. Pengembangan akan terus berlanjut dengan fokus pada fitur baru, optimisasi performa, dan peningkatan pengalaman pengguna.

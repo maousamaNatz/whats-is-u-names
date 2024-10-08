@@ -176,7 +176,7 @@ const createWelcomeImage = async (
     const buffer = canvas.toBuffer("image/png");
     const imagePath = path.join(
       __dirname,
-      `../../media/welandouts/welcome_${Date.now()}.png`
+      `../../media/downloads/welcome_${Date.now()}.png`
     );
     fs.writeFileSync(imagePath, buffer);
 
@@ -280,7 +280,7 @@ const createGoodbyeImage = async (
 
     // Draw additional welcome message (smaller text at the bottom)
     ctx.font = '18px "PT Mono"';
-    const smallMessage = `Selamat tinggal ${userName} di grup ${groupName}! trimakasih sudah bergabung dengan kami dan semoga Anda menikmati waktu Anda di sini. Jangan lupa untuk bertanya atau berinteraksi dengan anggota lainnya. Selamat bergabung! :D`;
+    const smallMessage = `Selamat tinggal ${userName} di grup ${groupName}! trimakasih sudah bergabung dengan kami dan semoga Anda menikmati waktu Anda di sini.`;
 
     // Define max width for text wrapping and center position
     const maxTextWidth = 1200; // Set the max width for the long text area
@@ -300,7 +300,7 @@ const createGoodbyeImage = async (
     const buffer = canvas.toBuffer("image/png");
     const imagePath = path.join(
       __dirname,
-      `../../media/welandouts/goodbye_${Date.now()}.png`
+      `../../media/downloads/goodbye_${Date.now()}.png`
     );
     fs.writeFileSync(imagePath, buffer);
 
@@ -337,7 +337,7 @@ const handleGroupUpdate = async (client, update) => {
           groupImageBuffer,
           userImageBuffer
         );
-        caption = `Selamat datang, ${userName}!`;
+        caption = `Selamat datang, ${userName}! semoga jadi member ${groupName}`;
       } else if (action === "remove") {
         imagePath = await createGoodbyeImage(
           groupName,
@@ -345,7 +345,7 @@ const handleGroupUpdate = async (client, update) => {
           groupImageBuffer,
           userImageBuffer
         );
-        caption = `Selamat tinggal, ${userName}!`;
+        caption = `Selamat tinggal, ${userName}! trimakasih sudah bergabung dengan kami dan semoga Anda menikmati waktu Anda di sini. Jangan lupa untuk bertanya atau berinteraksi dengan anggota lainnya. Selamat bergabung! :D`;
       }
 
       if (imagePath) {
@@ -353,13 +353,9 @@ const handleGroupUpdate = async (client, update) => {
           image: { url: imagePath },
           caption: caption,
         });
-        
-        if (fs.existsSync(imagePath)) {
-          fs.unlinkSync(imagePath);
-          console.log(`File at path ${imagePath} deleted.`);
-        } else {
-          console.error(`File at path ${imagePath} does not exist.`);
-        }
+        console.log(`pesan terkirim`);
+        fs.unlinkSync(imagePath);
+        console.log(`File ${imagePath} deleted.`);
       }
     } catch (error) {
       console.error(`Error processing ${action} for ${userName}:`, error);

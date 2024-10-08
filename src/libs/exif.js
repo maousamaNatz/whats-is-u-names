@@ -154,4 +154,4 @@ async function addExif(buffer, packname, author, categories = [''], extra = {}) 
 	return await img.save(null);
 }
 
-module.exports = { addExif, imageToWebp, videoToWebp, writeExifImg, writeExifVid, writeExif }
+module.exports = { addExif, writeExifImg, writeExifVid, writeExif }

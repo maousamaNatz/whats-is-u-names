@@ -7,8 +7,9 @@ const Tiktok = require("@tobyg74/tiktok-api-dl");
 const instagramDl = require("@sasmeee/igdl");
 const { TwitterDL } = require("twitter-downloader");
 const { downloadTrack2 } = require("@nechlophomeriaa/spotifydl");
-const { mediaStoragePath } = require("../config/path");
-const logger = require("../utils/logger");
+
+
+const mediaStoragePath = path.join(__dirname,  '../../media/downloads');
 /**
  * Memastikan direktori ada, jika tidak, membuatnya.
  * @param {string} filePath - Path file yang akan diperiksa direktorinya.

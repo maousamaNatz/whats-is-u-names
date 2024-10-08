@@ -1,11 +1,5 @@
 const axios = require("axios");
 const FormData = require("form-data");
-const { fetchModel } = require("./common");
-const { multiUpscale, initializeSuperRes } = require("./upscaling");
-const { imageToNdarray } = require("./utils");
-const ndarray = require("ndarray");
-const ops = require("ndarray-ops");
-const Jimp = require("jimp");
 // Gunakan URL baru untuk endpoint chat completions
 const apikey = process.env.API_KEY;
 const url = process.env.URL_AI;
@@ -454,61 +448,6 @@ async function askAi(aiType, query) {
     throw error;
   }
 }
-
-async function upscaleImage(imageBuffer, sizeFactor = 2) {
-  try {
-    const fileType = await import('file-type');
-    const type = await fileType.fileTypeFromBuffer(imageBuffer);
-
-    if (!type || !["jpg", "jpeg", "png"].includes(type.ext)) {
-      throw new Error(`Invalid file type: Unsupported format (${type ? type.ext : "unknown"})`);
-    }
-
-    const imageURI = `data:${type.mime};base64,${imageBuffer.toString("base64")}`;
-    await initializeSuperRes();
-
-    // Convert the image to ndarray
-    let imageArray = await imageToNdarray(imageURI);
-    console.log("Image array shape:", imageArray.shape);
-
-    // Perform the upscaling process
-    let upscaledImageArray = await multiUpscale(imageArray, sizeFactor);
-    console.log("Upscaled image array shape:", upscaledImageArray.shape);
-
-    // Strip alpha channel if present (convert from RGBA to RGB)
-    if (upscaledImageArray.shape[2] === 4) {
-      console.log("Stripping alpha channel from upscaled image.");
-      const rgbArray = ndarray(
-        new Uint8Array(upscaledImageArray.shape[0] * upscaledImageArray.shape[1] * 3),
-        [upscaledImageArray.shape[0], upscaledImageArray.shape[1], 3]
-      );
-      ops.assign(
-        rgbArray,
-        upscaledImageArray.hi(upscaledImageArray.shape[0], upscaledImageArray.shape[1], 3)
-      );
-      upscaledImageArray = rgbArray;
-    }
-
-    // Convert ndarray back to Buffer
-    const upscaledImageBuffer = Buffer.from(upscaledImageArray.data);
-
-    // Use Jimp to create an image from the buffer and encode it as PNG or JPEG
-    const jimpImage = await new Jimp({
-      data: upscaledImageBuffer,
-      width: upscaledImageArray.shape[1],
-      height: upscaledImageArray.shape[0],
-    });
-
-    // Convert to PNG or JPEG before returning the buffer
-    const finalImageBuffer = await jimpImage.getBufferAsync(Jimp.MIME_PNG); // or use Jimp.MIME_JPEG
-
-    return finalImageBuffer; // Return the valid image buffer
-  } catch (error) {
-    console.error(`Error while upscaling image: ${error.message}`);
-    throw error;
-  }
-}
-
 async function coderAi(code) {
   const trimcode = code.trim();
   const url = `ai/codemirror?q=${encodeURIComponent(trimcode)}`;
@@ -556,7 +495,6 @@ module.exports = {
   coderAi,
   lyrics,
   bing,
-  upscaleImage,
   elevenlabs,
   gemma,
 };

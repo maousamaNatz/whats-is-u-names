@@ -21,12 +21,26 @@ Halo! Saya adalah bot yang siap membantu Anda dalam berbagai kebutuhan sehari-ha
 1.) *.cuaca* : Cek informasi cuaca terkini
 2.) *.calculator* : Gunakan kalkulator sederhana
 3.) *.brandly* : Perpendek URL dengan mudah
-4.) *.download* : Download berbagai konten dari internet
-5.) *.search* : Pencarian cepat berbagai hal
-6.) *.shortlink* : Membuat shortlink dari url yang anda inginkan
-7.) *.ss* : Mengambil gambar tampilan website _*NGEBUG*_
-8.) *.createGroup* : Membuat grup baru dengan anggota yang disebutkan
-9.) *.sticker* : Membuat stiker dari gambar atau video yang dikirim
+4.) *.search* : Pencarian cepat berbagai hal
+5.) *.shortlink* : Membuat shortlink dari url yang anda inginkan
+6.) *.ss* : Mengambil gambar tampilan website _*NGEBUG*_
+7.) *.createGroup* : Membuat grup baru dengan anggota yang disebutkan
+8.) *.sticker* : Membuat stiker dari gambar atau video yang dikirim
+9.) *.dl* : Download berbagai konten dari internet
+10.) *.removebg* : Menghapus background dari gambar
+
+──────────────────
+*Search:*
+──────────────────
+
+1.) *.wiki* : Mencari informasi dari Wikipedia
+2.) *.animequote* : Mendapatkan kutipan anime secara acak
+3.) *.ringtone* : Mencari ringtone berdasarkan kata kunci
+4.) *.styletext* : Mengubah gaya teks
+5.) *.searchanime* : Mencari informasi anime di MyAnimeList
+6.) *.searchmanga* : Mencari informasi manga di MyAnimeList
+7.) *.pinterest* : Mencari gambar di Pinterest
+8.) *.wallpaper* : Mencari wallpaper berdasarkan kata kunci
 
 ──────────────────
 *🔄 Conversion Tools:* _(ONGOING)_
