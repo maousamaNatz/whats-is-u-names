@@ -1,4 +1,4 @@
-const db = require('./database');
+const db = require('./connection');
 
 const checkAuth = (roles) => {
     return (req, res, next) => {

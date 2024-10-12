@@ -1,4 +1,4 @@
-const db = require("../database/database");
+const db = require("../database/connection");
 const { checkAuth } = require("../database/auth");
 const { insertOrUpdateUser } = require("../database/seed");
 const {

@@ -1,22 +1,38 @@
-const db = require("./database");
+const { getUserByPhone } = require("./dbs");
+const db = require("./connection");
+const NodeCache = require('node-cache');
+const aiTokensCache = new NodeCache({ stdTTL: 300 }); // Cache selama 5 menit
 
 async function getUserAiTokens(userId, aiModel) {
-  return new Promise((resolve, reject) => {
-    db.query(
-      "SELECT * FROM ai_tokens WHERE user_id = ? AND ai_model = ?",
-      [userId, aiModel],
-      (err, results) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(results[0]);
+  const cacheKey = `aiTokens_${userId}_${aiModel}`;
+  let tokens = aiTokensCache.get(cacheKey);
+  
+  if (tokens === undefined) {
+    tokens = await new Promise((resolve, reject) => {
+      db.query(
+        "SELECT * FROM ai_tokens WHERE user_id = ? AND ai_model = ?",
+        [userId, aiModel],
+        (err, results) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(results[0]);
+          }
         }
-      }
-    );
-  });
+      );
+    });
+    
+    if (tokens) {
+      aiTokensCache.set(cacheKey, tokens);
+    }
+  }
+  
+  return tokens;
 }
 
 async function updateUserAiTokens(userId, aiModel, tokensLeft) {
+  const cacheKey = `aiTokens_${userId}_${aiModel}`;
+  
   return new Promise((resolve, reject) => {
     if (!userId) {
       reject(new Error("userId tidak boleh kosong"));
@@ -29,6 +45,7 @@ async function updateUserAiTokens(userId, aiModel, tokensLeft) {
         if (err) {
           reject(err);
         } else {
+          aiTokensCache.set(cacheKey, { user_id: userId, ai_model: aiModel, tokens_left: tokensLeft, last_used: new Date() });
           resolve(results);
         }
       }
@@ -41,22 +58,35 @@ async function resetUserAiTokens(userId, aiModel) {
 }
 
 async function getRemainingTokens(userId, aiModel) {
-  return new Promise((resolve, reject) => {
-    db.query(
-      "SELECT tokens_left, last_used FROM ai_tokens WHERE user_id = ? AND ai_model = ?",
-      [userId, aiModel],
-      (err, results) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(results[0] || { tokens_left: 12, last_used: new Date() });
+  const cacheKey = `aiTokens_${userId}_${aiModel}`;
+  let tokens = aiTokensCache.get(cacheKey);
+  
+  if (tokens === undefined) {
+    tokens = await new Promise((resolve, reject) => {
+      db.query(
+        "SELECT tokens_left, last_used FROM ai_tokens WHERE user_id = ? AND ai_model = ?",
+        [userId, aiModel],
+        (err, results) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(results[0] || { tokens_left: 12, last_used: new Date() });
+          }
         }
-      }
-    );
-  });
+      );
+    });
+    
+    if (tokens) {
+      aiTokensCache.set(cacheKey, tokens);
+    }
+  }
+  
+  return tokens;
 }
 
 async function initializeUserAiTokens(userId, aiModel) {
+  const cacheKey = `aiTokens_${userId}_${aiModel}`;
+  
   return new Promise((resolve, reject) => {
     if (!userId) {
       reject(new Error("userId tidak boleh kosong"));
@@ -69,6 +99,7 @@ async function initializeUserAiTokens(userId, aiModel) {
         if (err) {
           reject(err);
         } else {
+          aiTokensCache.set(cacheKey, { user_id: userId, ai_model: aiModel, tokens_left: 12, last_used: new Date() });
           resolve(results);
         }
       }
@@ -76,19 +107,21 @@ async function initializeUserAiTokens(userId, aiModel) {
   });
 }
 
-async function getUserByPhone(phone) {
+async function getUserByPhoneRedis(phone) {
   return new Promise((resolve, reject) => {
-    db.query(
-      "SELECT * FROM users WHERE phone = ?",
-      [phone],
-      (err, results) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(results[0]);
+    client.get(`user:${phone}`, async (err, result) => {
+      if (err) {
+        reject(err);
+      } else if (result) {
+        resolve(JSON.parse(result));
+      } else {
+        const user = await getUserByPhone(phone);
+        if (user) {
+          client.setex(`user:${phone}`, 3600, JSON.stringify(user)); // Simpan selama 1 jam
         }
+        resolve(user);
       }
-    );
+    });
   });
 }
 
@@ -98,5 +131,6 @@ module.exports = {
   resetUserAiTokens,
   getUserByPhone,
   getRemainingTokens,
-  initializeUserAiTokens
+  initializeUserAiTokens,
+  getUserByPhoneRedis,
 };

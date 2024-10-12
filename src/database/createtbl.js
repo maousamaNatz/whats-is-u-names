@@ -1,4 +1,4 @@
-const db = require('./database');
+const db = require("./connection");
 
 const createTables = () => {
   const createRolesTable = `
@@ -41,6 +41,24 @@ const createTables = () => {
       UNIQUE KEY user_model (user_id, ai_model)
     );
   `;
+  const createGrpsTable = `
+    CREATE TABLE IF NOT EXISTS Grps (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name_group VARCHAR(255) NOT NULL,
+      id_group VARCHAR(255) NOT NULL UNIQUE,
+      status ENUM('active', 'nonactive') DEFAULT 'nonactive',
+      timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+  const createLinksTable = `
+    CREATE TABLE IF NOT EXISTS links (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      link VARCHAR(255) NOT NULL,
+      id_grps INT,
+      timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (id_grps) REFERENCES Grps(id)
+    );
+  `;
 
   db.query(createRolesTable, (err) => {
     if (err) {
@@ -71,6 +89,21 @@ const createTables = () => {
       console.error("Error creating ai_tokens table:", err);
     } else {
       console.log("ai_tokens table created or already exists");
+    }
+  });
+
+  db.query(createGrpsTable, (err) => {
+    if (err) {
+      console.error("Error creating Grps table:", err);
+    } else {
+      console.log("Grps table created or already exists");
+    }
+  });
+  db.query(createLinksTable, (err) => {
+    if (err) {
+      console.error("Error creating links table:", err);
+    } else {
+      console.log("Links table created or already exists");
     }
   });
 };

@@ -14,7 +14,7 @@ const path = require("path");
 const P = require("pino");
 const fs = require("fs");
 const express = require("express");
-const db = require("./database/database");
+const db = require("./database/connection");
 const { checkSpam } = require("./utils/spams");
 const { handleGroupUpdate } = require("./libs/canvas");
 const { getSessionQR } = require("./utils/session");
@@ -333,6 +333,9 @@ async function initiateBot(sessionPath, userId = "bot-inti", lifetime = 30) {
       });
       return;
     }
+
+    // Tambahkan fungsi ini ke dalam event handler pesan masuk
+    await handleIncomingMessage(sock, message);
   });
 
   // Fungsi untuk menscan pesan yang belum terbaca atau belum dibalas
@@ -409,6 +412,41 @@ function cleanStoreAndMessages() {
     console.log("Store dan pesan berhasil dibersihkan.");
   } catch (error) {
     console.error("Error saat membersihkan store dan pesan:", error);
+  }
+}
+
+// Fungsi untuk memeriksa apakah sebuah string mengandung tautan
+function containsLink(text) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  return urlRegex.test(text);
+}
+
+// Tambahkan fungsi ini ke dalam event handler pesan masuk
+async function handleIncomingMessage(sock, message) {
+  const from = message.key.remoteJid;
+  const sender = message.key.participant || message.key.remoteJid;
+  const text = message.message.conversation || message.message.extendedTextMessage?.text || "";
+
+  if (from.endsWith('@g.us')) {
+    try {
+      const [rows] = await db.promise().query("SELECT status FROM Grps WHERE id_group = ?", [from]);
+      
+      if (rows.length > 0 && rows[0].status === "active" && containsLink(text)) {
+        const isAdmin = await isGroupAdmin(sock, from, sender);
+        if (!isAdmin) {
+          await sock.sendMessage(from, { delete: message.key });
+          await sock.sendMessage(from, { text: `@${sender.split('@')[0]}, tautan tidak diizinkan dalam grup ini.`, mentions: [sender] });
+          
+          // Simpan tautan yang dihapus ke dalam database
+          const [groupRow] = await db.promise().query("SELECT id FROM Grps WHERE id_group = ?", [from]);
+          if (groupRow.length > 0) {
+            await db.promise().query("INSERT INTO links (link, id_grps) VALUES (?, ?)", [text, groupRow[0].id]);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error saat memeriksa pesan:", error);
+    }
   }
 }
 
